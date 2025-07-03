@@ -7,41 +7,50 @@ import {
   CardDescription
 } from '@/components/ui/card';
 
-const salesData = [
+const hrActivitiesData = [
+  // {
+  //   name: 'Mamadou Diallo',
+  //   action: 'Contrat CDI signé',
+  //   entity: 'Touba Gaz Mbao',
+  //   avatar: '/assets/img/placeholders/profile-male.jpg',
+  //   fallback: 'MD',
+  //   status: 'Confirmé',
+  //   time: 'Il y a 2h'
+  // },
   {
-    name: 'Olivia Martin',
-    email: 'olivia.martin@email.com',
-    avatar: 'https://api.slingacademy.com/public/sample-users/1.png',
-    fallback: 'OM',
-    amount: '+$1,999.00'
+    name: 'Aminata Sow',
+    action: 'Congé approuvé',
+    entity: 'Touba Gaz Bouteilles',
+    avatar: '/assets/img/placeholders/profile-female.jpg',
+    fallback: 'AS',
+    status: '5 jours',
+    time: 'Il y a 4h'
   },
   {
-    name: 'Jackson Lee',
-    email: 'jackson.lee@email.com',
-    avatar: 'https://api.slingacademy.com/public/sample-users/2.png',
-    fallback: 'JL',
-    amount: '+$39.00'
+    name: 'Ousmane Ba',
+    action: 'Fin de contrat CDD',
+    entity: 'Touba Oil Hydro',
+    avatar: '/assets/img/placeholders/profile-male.jpg',
+    fallback: 'OB',
+    status: 'À renouveler',
+    time: 'Il y a 6h'
   },
   {
-    name: 'Isabella Nguyen',
-    email: 'isabella.nguyen@email.com',
-    avatar: 'https://api.slingacademy.com/public/sample-users/3.png',
-    fallback: 'IN',
-    amount: '+$299.00'
+    name: 'Fatou Ndiaye',
+    action: 'Nouveau recrutement',
+    entity: 'Touba Gaz Ngabou',
+    avatar: '/assets/img/placeholders/profile-female.jpg',
+    status: 'En cours',
+    time: 'Hier'
   },
   {
-    name: 'William Kim',
-    email: 'will@email.com',
-    avatar: 'https://api.slingacademy.com/public/sample-users/4.png',
-    fallback: 'WK',
-    amount: '+$99.00'
-  },
-  {
-    name: 'Sofia Davis',
-    email: 'sofia.davis@email.com',
-    avatar: 'https://api.slingacademy.com/public/sample-users/5.png',
-    fallback: 'SD',
-    amount: '+$39.00'
+    name: 'Cheikh Sy',
+    action: 'Formation complétée',
+    entity: 'Touba Gaz Mbao',
+    avatar: '/assets/img/placeholders/profile-male.jpg',
+    fallback: 'CS',
+    status: 'Certifié',
+    time: 'Hier'
   }
 ];
 
@@ -49,22 +58,27 @@ export function RecentSales() {
   return (
     <Card className='h-full'>
       <CardHeader>
-        <CardTitle>Recent Sales</CardTitle>
-        <CardDescription>You made 265 sales this month.</CardDescription>
+        <CardTitle>Activités Récentes</CardTitle>
+        <CardDescription>Dernières actions effectuées ce mois.</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className='space-y-8'>
-          {salesData.map((sale, index) => (
+        <div className='space-y-4'>
+          {hrActivitiesData.map((activity, index) => (
             <div key={index} className='flex items-center'>
               <Avatar className='h-9 w-9'>
-                <AvatarImage src={sale.avatar} alt='Avatar' />
-                <AvatarFallback>{sale.fallback}</AvatarFallback>
+                <AvatarImage src={activity.avatar} alt='Avatar' />
+                <AvatarFallback>{activity.fallback}</AvatarFallback>
               </Avatar>
               <div className='ml-4 space-y-1'>
-                <p className='text-sm leading-none font-medium'>{sale.name}</p>
-                <p className='text-muted-foreground text-sm'>{sale.email}</p>
+                <p className='text-sm leading-none font-medium'>{activity.name}</p>
+                <p className='text-muted-foreground text-sm'>
+                  {activity.action} • {activity.entity}
+                </p>
+                <p className='text-xs text-muted-foreground'>{activity.time}</p>
               </div>
-              <div className='ml-auto font-medium'>{sale.amount}</div>
+              <div className='ml-auto text-right'>
+                <div className='text-sm font-medium'>{activity.status}</div>
+              </div>
             </div>
           ))}
         </div>

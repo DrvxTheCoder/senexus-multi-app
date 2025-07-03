@@ -27,60 +27,68 @@ const chartData = [
   { browser: 'other', visitors: 190, fill: 'var(--primary-darker)' }
 ];
 
-const chartConfig = {
-  visitors: {
-    label: 'Visitors'
+const pieChartData = [
+  { department: 'production', employees: 128, fill: 'var(--primary)' },
+  { department: 'vente', employees: 89, fill: 'var(--primary-light)' },
+  { department: 'logistique', employees: 67, fill: 'var(--primary-lighter)' },
+  { department: 'administration', employees: 34, fill: 'var(--primary-dark)' },
+  { department: 'maintenance', employees: 24, fill: 'var(--primary-darker)' }
+];
+
+const pieChartConfig = {
+  employees: {
+    label: 'Employés'
   },
-  chrome: {
-    label: 'Chrome',
+  production: {
+    label: 'Production',
     color: 'var(--primary)'
   },
-  safari: {
-    label: 'Safari',
+  vente: {
+    label: 'Vente',
     color: 'var(--primary)'
   },
-  firefox: {
-    label: 'Firefox',
+  logistique: {
+    label: 'Logistique',
     color: 'var(--primary)'
   },
-  edge: {
-    label: 'Edge',
+  administration: {
+    label: 'Administration',
     color: 'var(--primary)'
   },
-  other: {
-    label: 'Other',
+  maintenance: {
+    label: 'Maintenance',
     color: 'var(--primary)'
   }
 } satisfies ChartConfig;
 
 export function PieGraph() {
-  const totalVisitors = React.useMemo(() => {
-    return chartData.reduce((acc, curr) => acc + curr.visitors, 0);
+  const totalEmployees = React.useMemo(() => {
+    return pieChartData.reduce((acc, curr) => acc + curr.employees, 0);
   }, []);
 
   return (
     <Card className='@container/card'>
       <CardHeader>
-        <CardTitle>Pie Chart - Donut with Text</CardTitle>
+        <CardTitle>Répartition par Département</CardTitle>
         <CardDescription>
           <span className='hidden @[540px]/card:block'>
-            Total visitors by browser for the last 6 months
+            Distribution des employés par département
           </span>
-          <span className='@[540px]/card:hidden'>Browser distribution</span>
+          <span className='@[540px]/card:hidden'>Par département</span>
         </CardDescription>
       </CardHeader>
       <CardContent className='px-2 pt-4 sm:px-6 sm:pt-6'>
         <ChartContainer
-          config={chartConfig}
+          config={pieChartConfig}
           className='mx-auto aspect-square h-[250px]'
         >
           <PieChart>
             <defs>
-              {['chrome', 'safari', 'firefox', 'edge', 'other'].map(
-                (browser, index) => (
+              {['production', 'vente', 'logistique', 'administration', 'maintenance'].map(
+                (department, index) => (
                   <linearGradient
-                    key={browser}
-                    id={`fill${browser}`}
+                    key={department}
+                    id={`fill${department}`}
                     x1='0'
                     y1='0'
                     x2='0'
@@ -105,12 +113,12 @@ export function PieGraph() {
               content={<ChartTooltipContent hideLabel />}
             />
             <Pie
-              data={chartData.map((item) => ({
+              data={pieChartData.map((item) => ({
                 ...item,
-                fill: `url(#fill${item.browser})`
+                fill: `url(#fill${item.department})`
               }))}
-              dataKey='visitors'
-              nameKey='browser'
+              dataKey='employees'
+              nameKey='department'
               innerRadius={60}
               strokeWidth={2}
               stroke='var(--background)'
@@ -130,14 +138,14 @@ export function PieGraph() {
                           y={viewBox.cy}
                           className='fill-foreground text-3xl font-bold'
                         >
-                          {totalVisitors.toLocaleString()}
+                          {totalEmployees.toLocaleString()}
                         </tspan>
                         <tspan
                           x={viewBox.cx}
                           y={(viewBox.cy || 0) + 24}
                           className='fill-muted-foreground text-sm'
                         >
-                          Total Visitors
+                          Total Employés
                         </tspan>
                       </text>
                     );
@@ -150,12 +158,12 @@ export function PieGraph() {
       </CardContent>
       <CardFooter className='flex-col gap-2 text-sm'>
         <div className='flex items-center gap-2 leading-none font-medium'>
-          Chrome leads with{' '}
-          {((chartData[0].visitors / totalVisitors) * 100).toFixed(1)}%{' '}
+          Production représente{' '}
+          {((pieChartData[0].employees / totalEmployees) * 100).toFixed(1)}%{' '}
           <IconTrendingUp className='h-4 w-4' />
         </div>
         <div className='text-muted-foreground leading-none'>
-          Based on data from January - June 2024
+          Basé sur les données de Janvier - Juin 2024
         </div>
       </CardFooter>
     </Card>

@@ -1,6 +1,7 @@
 'use client';
 
-import { Check, ChevronsUpDown, GalleryVerticalEnd } from 'lucide-react';
+import { Check, ChevronsUpDown } from 'lucide-react';
+
 import * as React from 'react';
 
 import {
@@ -12,26 +13,36 @@ import {
 import {
   SidebarMenu,
   SidebarMenuButton,
-  SidebarMenuItem
+  SidebarMenuItem,
+  useSidebar
 } from '@/components/ui/sidebar';
 import { useThemeConfig } from '@/components/active-theme';
 
 const ORGS = [
-  { id: 'senexus', name: 'Senexus Group', theme: 'default' },
-  { id: 'connectinterim', name: "Connect'Interim", theme: 'amber' },
-  { id: 'synergiepro', name: 'SynergiePro', theme: 'blue' },
-  { id: 'ipm-tawfeikh', name: 'IPM Tawfeikh', theme: 'green' }
+  { id: 'senexus', name: 'Senexus Group', theme: 'default', logo: '/assets/img/icons/senexus-icon.png' },
+  { id: 'connectinterim', name: "Connect'Interim", theme: 'amber', logo: '/assets/img/icons/connectinterim-icon.png' },
+  { id: 'synergiepro', name: 'SynergiePro', theme: 'blue', logo: '/assets/img/icons/synergie-icon.png' },
+  { id: 'ipm-tawfeikh', name: 'IPM Tawfeikh', theme: 'green', logo: '/assets/img/icons/ipmtawfeikh-icon.png' }
 ];
 
+type Tenant = { id: string; name: string };
+
+interface OrgSwitcherProps {
+  tenants: Tenant[];
+  defaultTenant: Tenant;
+  onTenantSwitch: (tenantId: string) => void;
+}
+
 export function OrgSwitcher({
+  tenants,
+  defaultTenant,
   onTenantSwitch
-}: {
-  onTenantSwitch?: (tenantId: string) => void;
-}) {
+}: OrgSwitcherProps) {
   const { activeTheme, setActiveTheme } = useThemeConfig();
+  const { state } = useSidebar();
   const [selectedTenant, setSelectedTenant] = React.useState(ORGS[0]);
 
-  const handleTenantSwitch = (tenant: typeof ORGS[0]) => {
+  const handleTenantSwitch = (tenant: (typeof ORGS)[0]) => {
     setSelectedTenant(tenant);
     setActiveTheme(tenant.theme);
     if (onTenantSwitch) {
@@ -42,6 +53,9 @@ export function OrgSwitcher({
   if (!selectedTenant) {
     return null;
   }
+
+  const isCollapsed = state === 'collapsed';
+
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -49,16 +63,24 @@ export function OrgSwitcher({
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               size='lg'
-              className='data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground'
+              className='data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground border'
+              tooltip={isCollapsed ? selectedTenant.name : undefined}
             >
-              <div className='bg-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg'>
-                <GalleryVerticalEnd className='size-4' />
+              <div className='p-0 text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg overflow-hidden'>
+                <img
+                  src={selectedTenant.logo}
+                  alt={selectedTenant.name + ' logo'}
+                  className='object-contain w-full'
+                />
               </div>
-              <div className='flex flex-col gap-0.5 leading-none'>
-                <span className='font-semibold'>{selectedTenant.name}</span>
-
-              </div>
-              <ChevronsUpDown className='ml-auto' />
+              {!isCollapsed && (
+                <>
+                  <div className='flex flex-col gap-0.5 leading-none'>
+                    <span className='font-semibold'>{selectedTenant.name}</span>
+                  </div>
+                  <ChevronsUpDown className='ml-auto' />
+                </>
+              )}
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
@@ -70,10 +92,19 @@ export function OrgSwitcher({
                 key={tenant.id}
                 onSelect={() => handleTenantSwitch(tenant)}
               >
-                {tenant.name}{' '}
-                {tenant.id === selectedTenant.id && (
-                  <Check className='ml-auto' />
-                )}
+                <div className='flex items-center gap-2'>
+                  <div className='flex aspect-square size-4 items-center justify-center rounded overflow-hidden'>
+                    <img
+                      src={tenant.logo}
+                      alt={tenant.name + ' logo'}
+                      className='object-contain w-full'
+                    />
+                  </div>
+                  {tenant.name}
+                  {tenant.id === selectedTenant.id && (
+                    <Check className='ml-auto' />
+                  )}
+                </div>
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>

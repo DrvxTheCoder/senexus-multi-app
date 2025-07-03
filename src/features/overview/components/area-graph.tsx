@@ -18,25 +18,25 @@ import {
   ChartTooltipContent
 } from '@/components/ui/chart';
 
-const chartData = [
-  { month: 'January', desktop: 186, mobile: 80 },
-  { month: 'February', desktop: 305, mobile: 200 },
-  { month: 'March', desktop: 237, mobile: 120 },
-  { month: 'April', desktop: 73, mobile: 190 },
-  { month: 'May', desktop: 209, mobile: 130 },
-  { month: 'June', desktop: 214, mobile: 140 }
+const areaChartData = [
+  { month: 'Janvier', cdi: 142, cdd: 78 },
+  { month: 'Février', cdi: 148, cdd: 82 },
+  { month: 'Mars', cdi: 151, cdd: 76 },
+  { month: 'Avril', cdi: 154, cdd: 89 },
+  { month: 'Mai', cdi: 156, cdd: 95 },
+  { month: 'Juin', cdi: 156, cdd: 98 }
 ];
 
-const chartConfig = {
-  visitors: {
-    label: 'Visitors'
+const areaChartConfig = {
+  contrats: {
+    label: 'Contrats'
   },
-  desktop: {
-    label: 'Desktop',
+  cdi: {
+    label: 'CDI',
     color: 'var(--primary)'
   },
-  mobile: {
-    label: 'Mobile',
+  cdd: {
+    label: 'CDD',
     color: 'var(--primary)'
   }
 } satisfies ChartConfig;
@@ -45,45 +45,45 @@ export function AreaGraph() {
   return (
     <Card className='@container/card'>
       <CardHeader>
-        <CardTitle>Area Chart - Stacked</CardTitle>
+        <CardTitle>Évolution des Contrats</CardTitle>
         <CardDescription>
-          Showing total visitors for the last 6 months
+          Répartition CDI/CDD sur les 6 derniers mois
         </CardDescription>
       </CardHeader>
       <CardContent className='px-2 pt-4 sm:px-6 sm:pt-6'>
         <ChartContainer
-          config={chartConfig}
+          config={areaChartConfig}
           className='aspect-auto h-[250px] w-full'
         >
           <AreaChart
-            data={chartData}
+            data={areaChartData}
             margin={{
               left: 12,
               right: 12
             }}
           >
             <defs>
-              <linearGradient id='fillDesktop' x1='0' y1='0' x2='0' y2='1'>
+              <linearGradient id='fillCDI' x1='0' y1='0' x2='0' y2='1'>
                 <stop
                   offset='5%'
-                  stopColor='var(--color-desktop)'
+                  stopColor='var(--color-cdi)'
                   stopOpacity={1.0}
                 />
                 <stop
                   offset='95%'
-                  stopColor='var(--color-desktop)'
+                  stopColor='var(--color-cdi)'
                   stopOpacity={0.1}
                 />
               </linearGradient>
-              <linearGradient id='fillMobile' x1='0' y1='0' x2='0' y2='1'>
+              <linearGradient id='fillCDD' x1='0' y1='0' x2='0' y2='1'>
                 <stop
                   offset='5%'
-                  stopColor='var(--color-mobile)'
+                  stopColor='var(--color-cdd)'
                   stopOpacity={0.8}
                 />
                 <stop
                   offset='95%'
-                  stopColor='var(--color-mobile)'
+                  stopColor='var(--color-cdd)'
                   stopOpacity={0.1}
                 />
               </linearGradient>
@@ -102,17 +102,17 @@ export function AreaGraph() {
               content={<ChartTooltipContent indicator='dot' />}
             />
             <Area
-              dataKey='mobile'
+              dataKey='cdd'
               type='natural'
-              fill='url(#fillMobile)'
-              stroke='var(--color-mobile)'
+              fill='url(#fillCDD)'
+              stroke='var(--color-cdd)'
               stackId='a'
             />
             <Area
-              dataKey='desktop'
+              dataKey='cdi'
               type='natural'
-              fill='url(#fillDesktop)'
-              stroke='var(--color-desktop)'
+              fill='url(#fillCDI)'
+              stroke='var(--color-cdi)'
               stackId='a'
             />
           </AreaChart>
@@ -122,11 +122,11 @@ export function AreaGraph() {
         <div className='flex w-full items-start gap-2 text-sm'>
           <div className='grid gap-2'>
             <div className='flex items-center gap-2 leading-none font-medium'>
-              Trending up by 5.2% this month{' '}
+              Croissance de 6.2% ce mois{' '}
               <IconTrendingUp className='h-4 w-4' />
             </div>
             <div className='text-muted-foreground flex items-center gap-2 leading-none'>
-              January - June 2024
+              Janvier - Juin 2024
             </div>
           </div>
         </div>
