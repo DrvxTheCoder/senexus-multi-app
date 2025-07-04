@@ -20,17 +20,72 @@ import {
 export const description = 'Un graphique à barres interactif';
 
 const chartData = [
-  { date: '2024-01-01', touba_gaz_mbao: 82, touba_gaz_bouteilles: 61 },
-  { date: '2024-01-15', touba_gaz_mbao: 50, touba_gaz_bouteilles: 62 },
-  { date: '2024-02-01', touba_gaz_mbao: 85, touba_gaz_bouteilles: 63 },
-  { date: '2024-02-15', touba_gaz_mbao: 96, touba_gaz_bouteilles: 64 },
-  { date: '2024-03-01', touba_gaz_mbao: 34, touba_gaz_bouteilles: 65 },
-  { date: '2024-03-15', touba_gaz_mbao: 45, touba_gaz_bouteilles: 66 },
-  { date: '2024-04-01', touba_gaz_mbao: 68, touba_gaz_bouteilles: 67 },
-  { date: '2024-04-15', touba_gaz_mbao: 30, touba_gaz_bouteilles: 67 },
-  { date: '2024-05-01', touba_gaz_mbao: 24, touba_gaz_bouteilles: 67 },
-  { date: '2024-05-15', touba_gaz_mbao: 45, touba_gaz_bouteilles: 67 },
-  { date: '2024-06-01', touba_gaz_mbao: 78, touba_gaz_bouteilles: 67 }
+  {
+    date: '2024-01-01',
+    touba_gaz_mbao: 82,
+    touba_gaz_bouteilles: 61,
+    touba_oil_hydro: 58
+  },
+  {
+    date: '2024-01-15',
+    touba_gaz_mbao: 50,
+    touba_gaz_bouteilles: 62,
+    touba_oil_hydro: 45
+  },
+  {
+    date: '2024-02-01',
+    touba_gaz_mbao: 85,
+    touba_gaz_bouteilles: 63,
+    touba_oil_hydro: 50
+  },
+  {
+    date: '2024-02-15',
+    touba_gaz_mbao: 96,
+    touba_gaz_bouteilles: 64,
+    touba_oil_hydro: 55
+  },
+  {
+    date: '2024-03-01',
+    touba_gaz_mbao: 34,
+    touba_gaz_bouteilles: 65,
+    touba_oil_hydro: 60
+  },
+  {
+    date: '2024-03-15',
+    touba_gaz_mbao: 45,
+    touba_gaz_bouteilles: 66,
+    touba_oil_hydro: 65
+  },
+  {
+    date: '2024-04-01',
+    touba_gaz_mbao: 68,
+    touba_gaz_bouteilles: 67,
+    touba_oil_hydro: 60
+  },
+  {
+    date: '2024-04-15',
+    touba_gaz_mbao: 30,
+    touba_gaz_bouteilles: 67,
+    touba_oil_hydro: 60
+  },
+  {
+    date: '2024-05-01',
+    touba_gaz_mbao: 24,
+    touba_gaz_bouteilles: 67,
+    touba_oil_hydro: 60
+  },
+  {
+    date: '2024-05-15',
+    touba_gaz_mbao: 45,
+    touba_gaz_bouteilles: 67,
+    touba_oil_hydro: 62
+  },
+  {
+    date: '2024-06-01',
+    touba_gaz_mbao: 78,
+    touba_gaz_bouteilles: 67,
+    touba_oil_hydro: 64
+  }
 ];
 
 const chartConfig = {
@@ -38,11 +93,15 @@ const chartConfig = {
     label: 'Employés'
   },
   touba_gaz_mbao: {
-    label: 'Touba Gaz Mbao',
+    label: 'TGM',
     color: 'var(--primary)'
   },
   touba_gaz_bouteilles: {
-    label: 'Touba Gaz Bouteilles',
+    label: 'TGB',
+    color: 'var(--primary)'
+  },
+  touba_oil_hydro: {
+    label: 'TOH',
     color: 'var(--primary)'
   }
 } satisfies ChartConfig;
@@ -53,8 +112,14 @@ export function BarGraph() {
 
   const total = React.useMemo(
     () => ({
-      touba_gaz_mbao: chartData.reduce((acc, curr) => acc + curr.touba_gaz_mbao, 0),
-      touba_gaz_bouteilles: chartData.reduce((acc, curr) => acc + curr.touba_gaz_bouteilles, 0)
+      touba_gaz_mbao: chartData.reduce(
+        (acc, curr) => acc + curr.touba_gaz_mbao,
+        0
+      ),
+      touba_gaz_bouteilles: chartData.reduce(
+        (acc, curr) => acc + curr.touba_gaz_bouteilles,
+        0
+      )
     }),
     []
   );
@@ -70,7 +135,7 @@ export function BarGraph() {
   }
 
   return (
-    <Card className='@container/card pt-0'>
+    <Card className='@container/card h-full pt-0'>
       <CardHeader className='flex flex-col items-stretch space-y-0 border-b !p-0 sm:flex-row'>
         <div className='flex flex-1 flex-col justify-center gap-1 px-6 !py-0'>
           <CardTitle>Évolution des Effectifs</CardTitle>
@@ -82,24 +147,30 @@ export function BarGraph() {
           </CardDescription>
         </div>
         <div className='flex'>
-          {['touba_gaz_mbao', 'touba_gaz_bouteilles'].map((key) => {
-            const chart = key as keyof typeof chartConfig;
-            return (
-              <button
-                key={chart}
-                data-active={activeChart === chart}
-                className='data-[active=true]:bg-primary/5 hover:bg-primary/5 relative flex flex-1 flex-col justify-center gap-1 border-t px-6 py-4 text-left transition-colors duration-200 even:border-l sm:border-t-0 sm:border-l sm:px-8 sm:py-6'
-                onClick={() => setActiveChart(chart)}
-              >
-                <span className='text-muted-foreground text-xs'>
-                  {chartConfig[chart].label}
-                </span>
-                <span className='text-lg leading-none font-bold sm:text-3xl'>
-                  {chartData[chartData.length - 1][key as keyof typeof chartData[0]]}
-                </span>
-              </button>
-            );
-          })}
+          {['touba_gaz_mbao', 'touba_gaz_bouteilles', 'touba_oil_hydro'].map(
+            (key) => {
+              const chart = key as keyof typeof chartConfig;
+              return (
+                <button
+                  key={chart}
+                  data-active={activeChart === chart}
+                  className='data-[active=true]:bg-primary/5 hover:bg-primary/5 relative flex flex-1 flex-col justify-center gap-1 border-t px-6 py-4 text-left transition-colors duration-200 even:border-l sm:border-t-0 sm:border-l sm:px-8 sm:py-6'
+                  onClick={() => setActiveChart(chart)}
+                >
+                  <span className='text-muted-foreground text-xs'>
+                    {chartConfig[chart].label}
+                  </span>
+                  <span className='text-lg leading-none font-bold sm:text-3xl'>
+                    {
+                      chartData[chartData.length - 1][
+                        key as keyof (typeof chartData)[0]
+                      ]
+                    }
+                  </span>
+                </button>
+              );
+            }
+          )}
         </div>
       </CardHeader>
       <CardContent className='px-2 pt-4 sm:px-6 sm:pt-6'>

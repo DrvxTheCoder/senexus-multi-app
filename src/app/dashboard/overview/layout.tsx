@@ -1,25 +1,37 @@
 import PageContainer from '@/components/layout/page-container';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardHeader,
   CardTitle,
   CardDescription,
   CardAction,
-  CardFooter
+  CardFooter,
+  CardContent
 } from '@/components/ui/card';
-import { 
-  IconUsers, 
-  IconBuildingFactory2, 
-  IconFileText, 
+import { Separator } from '@/components/ui/separator';
+import { CardActionButton } from '@/features/overview/components/card-action-button';
+import {
+  IconUsers,
+  IconBuildingFactory2,
+  IconFileText,
   IconUserExclamation,
-  IconTrendingUp, 
+  IconTrendingUp,
   IconTrendingDown,
   IconAlertTriangle,
   IconCalendarEvent,
   IconUserOff,
-  IconBeach
+  IconBeach,
+  IconUserPlus,
+  IconBuildingPlus,
+  IconFileTextSpark,
+  IconFilePencil,
+  IconBoltFilled,
+  IconExternalLink,
+  IconEye
 } from '@tabler/icons-react';
+import Link from 'next/link';
 import React from 'react';
 
 export default function OverViewLayout({
@@ -35,11 +47,70 @@ export default function OverViewLayout({
 }) {
   return (
     <PageContainer>
-      <div className='flex flex-1 flex-col space-y-4 pb-52'>
+      <div className='flex flex-1 flex-col space-y-4 pb-32'>
         <div className='flex items-center justify-between space-y-2'>
           <h2 className='text-2xl font-bold tracking-tight'>
             {`Vue d'ensemble`}
           </h2>
+        </div>
+
+        {/* Alert Banners */}
+        <div className='grid grid-cols-1 gap-3 md:grid-cols-3'>
+          <Card className='flex flex-row items-center justify-between pr-6'>
+            <CardHeader className='w-full pb-3'>
+              <div className='flex items-center gap-2'>
+                <IconAlertTriangle className='text-destructive h-4 w-4' />
+                <CardTitle className='text-destructive text-sm'>
+                  Contrats Expirant
+                </CardTitle>
+              </div>
+              <CardDescription className=''>
+                7 contrats expirent dans les 30 prochains jours
+              </CardDescription>
+            </CardHeader>
+            <Link href={'#'}>
+              <Button size={'sm'} variant={'outline'}>
+                <span className='hidden md:block'>Afficher</span>
+                <IconEye className='h-4 w-4 md:ml-2' />
+              </Button>
+            </Link>
+          </Card>
+
+          <Card className='flex flex-row items-center justify-between pr-6'>
+            <CardHeader className='w-full pb-3'>
+              <div className='flex items-center gap-2'>
+                <IconCalendarEvent className='h-4 w-4' />
+                <CardTitle className='text-sm'>Demandes de Congé</CardTitle>
+              </div>
+              <CardDescription className='font-medium'>
+                5 demandes en attente d&apos;approbation
+              </CardDescription>
+            </CardHeader>
+            <Link href={'#'}>
+              <Button size={'sm'} variant={'outline'}>
+                <span className='hidden md:block'>Voir les congés</span>
+                <IconExternalLink className='h-4 w-4 md:ml-2' />
+              </Button>
+            </Link>
+          </Card>
+
+          <Card className='flex flex-row items-center justify-between pr-6'>
+            <CardHeader className='w-full pb-3'>
+              <div className='flex items-center gap-2'>
+                <IconUserOff className='h-4 w-4' />
+                <CardTitle className='text-sm'>Absences du Jour</CardTitle>
+              </div>
+              <CardDescription className='font-medium'>
+                12 employés absents • 8 en congé
+              </CardDescription>
+            </CardHeader>
+            <Link href={'#'}>
+              <Button size={'sm'} variant={'outline'}>
+                <span className='hidden md:block'>Voir les absences</span>
+                <IconExternalLink className='h-4 w-4 md:ml-2' />
+              </Button>
+            </Link>
+          </Card>
         </div>
 
         {/* Stats Cards */}
@@ -119,7 +190,7 @@ export default function OverViewLayout({
           <Card className='@container/card'>
             <CardHeader>
               <CardDescription>Alertes Contrats</CardDescription>
-              <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl text-destructive'>
+              <CardTitle className='text-destructive text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
                 18
               </CardTitle>
               <CardAction>
@@ -130,7 +201,7 @@ export default function OverViewLayout({
               </CardAction>
             </CardHeader>
             <CardFooter className='flex-col items-start gap-1.5 text-sm'>
-              <div className='line-clamp-1 flex gap-2 font-medium text-destructive'>
+              <div className='text-destructive line-clamp-1 flex gap-2 font-medium'>
                 <IconUserExclamation className='size-4' />
                 Nécessite attention
               </div>
@@ -141,58 +212,40 @@ export default function OverViewLayout({
           </Card>
         </div>
 
-        {/* Bar chart and Activity Stats */}
-        <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-7'>
+        <div className='grid grid-cols-1 gap-4 md:grid-cols-3 lg:grid-cols-7'>
+          {/* Quick actions / Actions rapide */}
+          <div className='col-span-4 md:col-span-1'>
+            <div className='flex h-fit flex-col items-center justify-between gap-2 py-2'>
+              <div className='flex w-full flex-row items-center justify-between justify-items-start px-3 pb-3'>
+                <div className='text-muted-foreground text-sm font-semibold'>
+                  Actions Rapides
+                </div>
+                <IconBoltFilled className='text-muted-foreground size-4' />
+              </div>
+
+              <CardActionButton
+                title='Ajouter un employé'
+                action={<IconUserPlus className='size-4' />}
+              />
+              <CardActionButton
+                title='Nouveau client'
+                action={<IconBuildingPlus className='size-4' />}
+              />
+              <CardActionButton
+                title='Modifier un contrat'
+                action={<IconFilePencil className='size-4' />}
+              />
+            </div>
+          </div>
+          {/* Bar chart and Activity Stats */}
           <div className='col-span-4'>{bar_stats}</div>
-          <div className='col-span-4 md:col-span-3'>{pie_stats}</div>
-        </div>
-
-        {/* Alert Banners */}
-        <div className='grid grid-cols-1 gap-3 md:grid-cols-3'>
-          <Card>
-            <CardHeader className='pb-3'>
-              <div className='flex items-center gap-2'>
-                <IconAlertTriangle className='text-destructive' />
-                <CardTitle className='text-sm text-destructive'>Contrats Expirant</CardTitle>
-              </div>
-              <CardDescription className=''>
-                7 contrats expirent dans les 30 prochains jours
-              </CardDescription>
-            </CardHeader>
-          </Card>
-
-          <Card >
-            <CardHeader className='pb-3'>
-              <div className='flex items-center gap-2'>
-                <IconCalendarEvent  />
-                <CardTitle className='text-sm'>Demandes de Congé</CardTitle>
-              </div>
-              <CardDescription className='font-medium'>
-                5 demandes en attente d&apos;approbation
-              </CardDescription>
-            </CardHeader>
-          </Card>
-
-          <Card className=''>
-            <CardHeader className='pb-3'>
-              <div className='flex items-center gap-2'>
-                <IconUserOff className='size-4' />
-                <CardTitle className='text-sm'>Absences du Jour</CardTitle>
-              </div>
-              <CardDescription className='font-medium'>
-                12 employés absents • 8 en congé
-              </CardDescription>
-            </CardHeader>
-          </Card>
+          <div className='col-span-4 md:col-span-2'>{pie_stats}</div>
         </div>
 
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-7'>
           <div className='col-span-4'>{area_stats}</div>
           <div className='col-span-4 md:col-span-3'>{sales}</div>
-          
         </div>
-
-
       </div>
     </PageContainer>
   );

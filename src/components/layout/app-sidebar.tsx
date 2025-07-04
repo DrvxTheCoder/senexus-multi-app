@@ -149,13 +149,15 @@ export default function AppSidebar() {
             <SidebarMenuButton
               asChild
               tooltip={`Déconnexion`}
-              className='border data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground'
+              className='data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground border'
               size='lg'
             >
               <SignOutButton redirectUrl='/auth/sign-in'>
-                <span className="flex flex-row items-center justify-items-center">
-                  <IconLogout className='h-4 w-4' />
-                  Déconnexion
+                <span className='flex w-full flex-row items-center justify-items-center'>
+                  <IconLogout className='ml-2 h-4 w-4' />
+                  <span className='sidebar-collapsed:hidden ml-2 data-[collapsed=true]:hidden'>
+                    Déconnexion
+                  </span>
                 </span>
               </SignOutButton>
             </SidebarMenuButton>
