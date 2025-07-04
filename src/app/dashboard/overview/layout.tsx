@@ -35,14 +35,14 @@ export default function OverViewLayout({
 }) {
   return (
     <PageContainer>
-      <div className='flex flex-1 flex-col space-y-4'>
+      <div className='flex flex-1 flex-col space-y-4 pb-52'>
         <div className='flex items-center justify-between space-y-2'>
           <h2 className='text-2xl font-bold tracking-tight'>
             {`Vue d'ensemble`}
           </h2>
         </div>
 
-{/* Stats Cards */}
+        {/* Stats Cards */}
         <div className='*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs md:grid-cols-2 lg:grid-cols-4'>
           <Card className='@container/card'>
             <CardHeader>
@@ -141,10 +141,10 @@ export default function OverViewLayout({
           </Card>
         </div>
 
-
+        {/* Bar chart and Activity Stats */}
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-7'>
           <div className='col-span-4'>{bar_stats}</div>
-          <div className='col-span-4 md:col-span-3'>{sales}</div>
+          <div className='col-span-4 md:col-span-3'>{pie_stats}</div>
         </div>
 
         {/* Alert Banners */}
@@ -168,7 +168,7 @@ export default function OverViewLayout({
                 <CardTitle className='text-sm'>Demandes de Congé</CardTitle>
               </div>
               <CardDescription className='font-medium'>
-                5 demandes en attente d'approbation
+                5 demandes en attente d&apos;approbation
               </CardDescription>
             </CardHeader>
           </Card>
@@ -188,7 +188,8 @@ export default function OverViewLayout({
 
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-7'>
           <div className='col-span-4'>{area_stats}</div>
-          <div className='col-span-4 md:col-span-3'>{pie_stats}</div>
+          <div className='col-span-4 md:col-span-3'>{sales}</div>
+          
         </div>
 
 

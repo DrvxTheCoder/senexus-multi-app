@@ -70,13 +70,13 @@ export function BarGraph() {
   }
 
   return (
-    <Card className='@container/card !pt-3'>
+    <Card className='@container/card pt-0'>
       <CardHeader className='flex flex-col items-stretch space-y-0 border-b !p-0 sm:flex-row'>
         <div className='flex flex-1 flex-col justify-center gap-1 px-6 !py-0'>
           <CardTitle>Évolution des Effectifs</CardTitle>
           <CardDescription>
             <span className='hidden @[540px]/card:block'>
-              Nombre d'employés par entité sur 6 mois
+              Nombre d&apos;employés par entité sur 6 mois
             </span>
             <span className='@[540px]/card:hidden'>6 derniers mois</span>
           </CardDescription>

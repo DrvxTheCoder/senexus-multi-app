@@ -8,6 +8,7 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardAction,
   CardFooter,
   CardHeader,
   CardTitle
@@ -18,6 +19,7 @@ import {
   ChartTooltip,
   ChartTooltipContent
 } from '@/components/ui/chart';
+import { Badge } from '@/components/ui/badge';
 
 const chartData = [
   { browser: 'chrome', visitors: 275, fill: 'var(--primary)' },
@@ -67,15 +69,21 @@ export function PieGraph() {
   }, []);
 
   return (
-    <Card className='@container/card'>
+    <Card className='@container/card h-full'>
       <CardHeader>
-        <CardTitle>Répartition par Département</CardTitle>
+        <CardTitle>
+          Répartition par Département
+        </CardTitle>
         <CardDescription>
-          <span className='hidden @[540px]/card:block'>
-            Distribution des employés par département
-          </span>
+          <span className='hidden @[540px]/card:block'>Distribution des employés par département</span>
           <span className='@[540px]/card:hidden'>Par département</span>
         </CardDescription>
+        <CardAction>
+          <Badge variant='outline'>
+            <IconTrendingUp />
+            {((pieChartData[0].employees / totalEmployees) * 100).toFixed(1)}%{' '}
+          </Badge>
+        </CardAction>
       </CardHeader>
       <CardContent className='px-2 pt-4 sm:px-6 sm:pt-6'>
         <ChartContainer
@@ -157,11 +165,6 @@ export function PieGraph() {
         </ChartContainer>
       </CardContent>
       <CardFooter className='flex-col gap-2 text-sm'>
-        <div className='flex items-center gap-2 leading-none font-medium'>
-          Production représente{' '}
-          {((pieChartData[0].employees / totalEmployees) * 100).toFixed(1)}%{' '}
-          <IconTrendingUp className='h-4 w-4' />
-        </div>
         <div className='text-muted-foreground leading-none'>
           Basé sur les données de Janvier - Juin 2024
         </div>

@@ -16,8 +16,9 @@ const META_THEME_COLORS = {
 };
 
 export const metadata: Metadata = {
-  title: 'Next Shadcn',
-  description: 'Basic dashboard with Next.js and Shadcn'
+  title: 'Senexus Group Multi-App',
+  description: 'Senexus Group Multi-App est une application web moderne conçue pour les entreprises du groupe Senexus.',
+  // metadataBase: new URL('https://senexusgroup.sn'),
 };
 
 export const viewport: Viewport = {
@@ -47,6 +48,9 @@ export default async function RootLayout({
             `
           }}
         />
+        <link href="https://fonts.cdnfonts.com/css/neue-haas-grotesk-display-pro" rel="stylesheet" />
+        {/* <link rel="icon" href="/favicon.ico" /> */}
+          <title>Senexus Group Multi-App</title>
       </head>
       <body
         className={cn(

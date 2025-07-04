@@ -38,6 +38,7 @@ const fontInter = Inter({
   subsets: ['latin'],
   variable: '--font-inter'
 });
+const fontNeueHaas = 'var(--font-neue-haas)';
 
 export const fontVariables = cn(
   fontSans.variable,
@@ -45,5 +46,6 @@ export const fontVariables = cn(
   fontInstrument.variable,
   fontNotoMono.variable,
   fontMullish.variable,
-  fontInter.variable
+  fontInter.variable,
+  fontNeueHaas
 );
