@@ -15,6 +15,13 @@ export default function Providers({
 }) {
   // we need the resolvedTheme value to set the baseTheme for clerk based on the dark or light theme
   const { resolvedTheme } = useTheme();
+  const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+
+  if (!publishableKey) {
+    throw new Error('Missing NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY');
+  }
+
+  // console.log('ClerkProvider publishableKey:', publishableKey);
 
   return (
     <>
@@ -23,7 +30,7 @@ export default function Providers({
           appearance={{
             baseTheme: resolvedTheme === 'dark' ? dark : undefined
           }}
-          publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+          publishableKey={publishableKey}
         >
           {children}
         </ClerkProvider>
