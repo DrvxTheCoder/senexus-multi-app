@@ -30,7 +30,10 @@ export default function Providers({
           appearance={{
             baseTheme: resolvedTheme === 'dark' ? dark : undefined
           }}
-          publishableKey={publishableKey}
+          publishableKey={
+            publishableKey ||
+            'pk_test_cG9zaXRpdmUtc2FpbGZpc2gtNC5jbGVyay5hY2NvdW50cy5kZXYk'
+          }
         >
           {children}
         </ClerkProvider>
