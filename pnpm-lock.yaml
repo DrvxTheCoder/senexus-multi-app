@@ -116,6 +116,9 @@ dependencies:
   '@sentry/nextjs':
     specifier: ^9.19.0
     version: 9.34.0(@opentelemetry/context-async-hooks@2.0.1)(@opentelemetry/core@2.0.1)(@opentelemetry/instrumentation@0.200.0)(@opentelemetry/sdk-trace-base@2.0.1)(next@15.3.2)(react@19.0.0)(webpack@5.99.9)
+  '@supabase/ssr':
+    specifier: ^0.6.1
+    version: 0.6.1(@supabase/supabase-js@2.50.3)
   '@supabase/supabase-js':
     specifier: ^2.50.3
     version: 2.50.3
@@ -159,7 +162,7 @@ dependencies:
     specifier: ^8.0.0
     version: 8.0.3
   motion:
-    specifier: ^11.17.0
+    specifier: ^11.18.2
     version: 11.18.2(react-dom@19.0.0)(react@19.0.0)
   next:
     specifier: 15.3.2
@@ -209,6 +212,9 @@ dependencies:
   sort-by:
     specifier: ^1.2.0
     version: 1.2.0
+  spinners-react:
+    specifier: ^1.0.11
+    version: 1.0.11(@types/react-dom@19.0.2)(@types/react@19.0.1)(react-dom@19.0.0)(react@19.0.0)
   tailwind-merge:
     specifier: ^3.0.2
     version: 3.3.1
@@ -3451,6 +3457,15 @@ packages:
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
+    dev: false
+
+  /@supabase/ssr@0.6.1(@supabase/supabase-js@2.50.3):
+    resolution: {integrity: sha512-QtQgEMvaDzr77Mk3vZ3jWg2/y+D8tExYF7vcJT+wQ8ysuvOeGGjYbZlvj5bHYsj/SpC0bihcisnwPrM4Gp5G4g==}
+    peerDependencies:
+      '@supabase/supabase-js': ^2.43.4
+    dependencies:
+      '@supabase/supabase-js': 2.50.3
+      cookie: 1.0.2
     dev: false
 
   /@supabase/storage-js@2.7.1:
@@ -7808,6 +7823,20 @@ packages:
   /source-map@0.6.1:
     resolution: {integrity: sha512-UjgapumWlbMhkBgzT7Ykc5YXUT46F0iKu8SGXq0bcwP5dz/h0Plj6enJqjz1Zbq2l5WaqYnrVbwWOWMyF3F47g==}
     engines: {node: '>=0.10.0'}
+    dev: false
+
+  /spinners-react@1.0.11(@types/react-dom@19.0.2)(@types/react@19.0.1)(react-dom@19.0.0)(react@19.0.0):
+    resolution: {integrity: sha512-CpQZixAI3dW+nLuJSrOTz4bDroSwLoIO5ljFt8wc1qy39yhK6MUubKnPD3z9/xIwNWFqy3mMRlW1mik/Fgqjow==}
+    peerDependencies:
+      '@types/react': ^16.x || ^17.x || ^18.x || ^19.x
+      '@types/react-dom': ^16.x || ^17.x || ^18.x || ^19.x
+      react: ^16.x || ^17.x || ^18.x || ^19.x
+      react-dom: ^16.x || ^17.x || ^18.x || ^19.x
+    dependencies:
+      '@types/react': 19.0.1
+      '@types/react-dom': 19.0.2(@types/react@19.0.1)
+      react: 19.0.0
+      react-dom: 19.0.0(react@19.0.0)
     dev: false
 
   /stable-hash@0.0.5:

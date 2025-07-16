@@ -33,6 +33,7 @@ import {
 } from '@tabler/icons-react';
 import Link from 'next/link';
 import React from 'react';
+import { SpinnerCircular } from 'spinners-react';
 
 export default function OverViewLayout({
   sales,
@@ -55,8 +56,14 @@ export default function OverViewLayout({
         </div>
 
         {/* Alert Banners */}
+        <SpinnerCircular
+          size={'2rem'}
+          color='var(--accent-foreground)'
+          secondaryColor='var(--secondary)'
+          thickness={180}
+        />
         <div className='grid grid-cols-1 gap-3 md:grid-cols-3'>
-          <Card className='flex flex-row items-center justify-between pr-6'>
+          <Card className='text-accent-foreground flex flex-row items-center justify-between pr-6'>
             <CardHeader className='w-full pb-3'>
               <div className='flex items-center gap-2'>
                 <IconAlertTriangle className='text-destructive h-4 w-4' />

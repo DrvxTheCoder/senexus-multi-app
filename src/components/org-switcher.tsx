@@ -1,13 +1,13 @@
 'use client';
 
-import { Check, ChevronsUpDown } from 'lucide-react';
-
+import { Check, ChevronsUpDown, Plus, Building2 } from 'lucide-react';
 import * as React from 'react';
-
+import { createClient } from '@/app/utils/supabase/client';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import {
@@ -17,20 +17,61 @@ import {
   useSidebar
 } from '@/components/ui/sidebar';
 import { useThemeConfig } from '@/components/active-theme';
+import { NewFirmDialog } from '@/components/new-firm-dialog';
+import { TextShimmer } from 'components/motion-primitives/text-shimmer';
+import { SpinnerCircular } from 'spinners-react';
 
-const ORGS = [
-  { id: 'senexus', name: 'Senexus Group', theme: 'default', logo: '/assets/img/icons/senexus-icon.png' },
-  { id: 'connectinterim', name: "Connect'Interim", theme: 'amber', logo: '/assets/img/icons/connectinterim-icon.png' },
-  { id: 'synergiepro', name: 'SynergiePro', theme: 'blue', logo: '/assets/img/icons/synergie-icon.png' },
-  { id: 'ipm-tawfeikh', name: 'IPM Tawfeikh', theme: 'green', logo: '/assets/img/icons/ipmtawfeikh-icon.png' }
-];
+interface Firm {
+  id: string;
+  name: string;
+  logo: string | null;
+  theme_color: string | null;
+}
+
+// Map theme colors to theme names for the theme system
+const getThemeFromColor = (color: string | null): string => {
+  const colorMap: Record<string, string> = {
+    '#000000': 'default',
+    '#f59e0b': 'amber',
+    '#3b82f6': 'blue',
+    '#10b981': 'green',
+    '#ef4444': 'red',
+    '#8b5cf6': 'violet',
+    '#ec4899': 'pink',
+    '#f97316': 'orange'
+  };
+  return colorMap[color || ''] || 'default';
+};
+
+// Cookie utilities
+const SELECTED_FIRM_COOKIE = 'selectedFirmId';
+
+const setCookie = (name: string, value: string, days: number = 30) => {
+  const expires = new Date();
+  expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
+  document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/;SameSite=Lax`;
+};
+
+const getCookie = (name: string): string | null => {
+  if (typeof document === 'undefined') return null;
+
+  const nameEQ = name + '=';
+  const ca = document.cookie.split(';');
+
+  for (let i = 0; i < ca.length; i++) {
+    let c = ca[i];
+    while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+    if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+  }
+  return null;
+};
 
 type Tenant = { id: string; name: string };
 
 interface OrgSwitcherProps {
-  tenants: Tenant[];
-  defaultTenant: Tenant;
-  onTenantSwitch: (tenantId: string) => void;
+  tenants?: Tenant[];
+  defaultTenant?: Tenant;
+  onTenantSwitch?: (tenantId: string) => void;
 }
 
 export function OrgSwitcher({
@@ -40,15 +81,163 @@ export function OrgSwitcher({
 }: OrgSwitcherProps) {
   const { activeTheme, setActiveTheme } = useThemeConfig();
   const { state } = useSidebar();
-  const [selectedTenant, setSelectedTenant] = React.useState(ORGS[0]);
+  const [firms, setFirms] = React.useState<Firm[]>([]);
+  const [selectedTenant, setSelectedTenant] = React.useState<Firm | null>(null);
+  const [loading, setLoading] = React.useState(true);
+  const [cookiesLoaded, setCookiesLoaded] = React.useState(false);
 
-  const handleTenantSwitch = (tenant: (typeof ORGS)[0]) => {
-    setSelectedTenant(tenant);
-    setActiveTheme(tenant.theme);
+  // Load saved firm ID from cookie on client-side only
+  React.useEffect(() => {
+    setCookiesLoaded(true);
+  }, []);
+
+  // Fetch firms from database
+  const fetchFirms = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      const supabase = createClient();
+
+      const { data, error } = await supabase
+        .from('firms')
+        .select('id, name, logo, theme_color')
+        .eq('is_active', true)
+        .order('name');
+
+      if (error) {
+        console.error('Error fetching firms:', error);
+        return;
+      }
+
+      const firmsData = data || [];
+      setFirms(firmsData);
+
+      // Set selected firm based on cookie or default to first firm
+      if (cookiesLoaded && firmsData.length > 0) {
+        const savedFirmId = getCookie(SELECTED_FIRM_COOKIE);
+        let firmToSelect: Firm | null = null;
+
+        if (savedFirmId) {
+          // Try to find the saved firm
+          firmToSelect =
+            firmsData.find((firm) => firm.id === savedFirmId) || null;
+        }
+
+        // If no saved firm found or no saved firm, use first firm
+        if (!firmToSelect) {
+          firmToSelect = firmsData[0];
+        }
+
+        if (
+          firmToSelect &&
+          (!selectedTenant || selectedTenant.id !== firmToSelect.id)
+        ) {
+          setSelectedTenant(firmToSelect);
+          setActiveTheme(getThemeFromColor(firmToSelect.theme_color));
+
+          // Save to cookie
+          setCookie(SELECTED_FIRM_COOKIE, firmToSelect.id);
+
+          // Notify parent component
+          if (onTenantSwitch) {
+            onTenantSwitch(firmToSelect.id);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching firms:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [cookiesLoaded, selectedTenant, setActiveTheme, onTenantSwitch]);
+
+  // Load firms when cookies are loaded
+  React.useEffect(() => {
+    if (cookiesLoaded) {
+      fetchFirms();
+    }
+  }, [cookiesLoaded, fetchFirms]);
+
+  const handleTenantSwitch = (firm: Firm) => {
+    setSelectedTenant(firm);
+    setActiveTheme(getThemeFromColor(firm.theme_color));
+
+    // Save selection to cookie
+    setCookie(SELECTED_FIRM_COOKIE, firm.id);
+
     if (onTenantSwitch) {
-      onTenantSwitch(tenant.id);
+      onTenantSwitch(firm.id);
     }
   };
+
+  const handleFirmCreated = () => {
+    // Refresh the firms list when a new firm is created
+    fetchFirms();
+  };
+
+  // Show loading state
+  if (loading || !cookiesLoaded) {
+    return (
+      <SidebarMenu>
+        <SidebarMenuItem>
+          <SidebarMenuButton
+            size='lg'
+            className='data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground border'
+            disabled
+          >
+            <div className='bg-muted flex aspect-square size-8 items-center justify-center rounded-lg p-0'>
+              <SpinnerCircular
+                size={'1rem'}
+                color='var(--accent-foreground)'
+                secondaryColor='var(--secondary)'
+                thickness={180}
+              />
+            </div>
+            {state !== 'collapsed' && (
+              <TextShimmer className='font-mono text-xs' duration={1}>
+                Chargement...
+              </TextShimmer>
+            )}
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      </SidebarMenu>
+    );
+  }
+
+  // Show empty state if no firms
+  if (firms.length === 0) {
+    return (
+      <SidebarMenu>
+        <SidebarMenuItem>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <SidebarMenuButton
+                size='lg'
+                className='data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground border'
+              >
+                <div className='bg-muted flex aspect-square size-8 items-center justify-center rounded-lg p-0'>
+                  <Building2 className='size-4' />
+                </div>
+                {state !== 'collapsed' && (
+                  <>
+                    <div className='flex flex-col gap-0.5 leading-none'>
+                      <span className='font-mono'>Aucune firme</span>
+                    </div>
+                    <ChevronsUpDown className='ml-auto' />
+                  </>
+                )}
+              </SidebarMenuButton>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              className='w-[--radix-dropdown-menu-trigger-width]'
+              align='start'
+            >
+              <NewFirmDialog onFirmCreated={handleFirmCreated} />
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </SidebarMenuItem>
+      </SidebarMenu>
+    );
+  }
 
   if (!selectedTenant) {
     return null;
@@ -66,11 +255,28 @@ export function OrgSwitcher({
               className='data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground border'
               tooltip={isCollapsed ? selectedTenant.name : undefined}
             >
-              <div className='p-0 text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg overflow-hidden'>
-                <img
-                  src={selectedTenant.logo}
-                  alt={selectedTenant.name + ' logo'}
-                  className='object-contain w-full'
+              <div className='text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center overflow-hidden rounded-lg p-0'>
+                {selectedTenant.logo ? (
+                  <img
+                    src={selectedTenant.logo}
+                    alt={selectedTenant.name + ' logo'}
+                    className='w-full object-contain'
+                    onError={(e) => {
+                      // Fallback to building icon if logo fails to load
+                      e.currentTarget.style.display = 'none';
+                      const parent = e.currentTarget.parentElement;
+                      if (parent) {
+                        const fallback = parent.querySelector('.fallback-icon');
+                        if (fallback) {
+                          (fallback as HTMLElement).style.display = 'block';
+                        }
+                      }
+                    }}
+                  />
+                ) : null}
+                <Building2
+                  className={`fallback-icon size-4 ${selectedTenant.logo ? 'hidden' : 'block'}`}
+                  style={{ color: selectedTenant.theme_color || '#3b82f6' }}
                 />
               </div>
               {!isCollapsed && (
@@ -87,26 +293,51 @@ export function OrgSwitcher({
             className='w-[--radix-dropdown-menu-trigger-width]'
             align='start'
           >
-            {ORGS.map((tenant) => (
+            {firms.map((firm) => (
               <DropdownMenuItem
-                key={tenant.id}
-                onSelect={() => handleTenantSwitch(tenant)}
+                key={firm.id}
+                onSelect={() => handleTenantSwitch(firm)}
               >
-                <div className='flex items-center gap-2'>
-                  <div className='flex aspect-square size-4 items-center justify-center rounded overflow-hidden'>
-                    <img
-                      src={tenant.logo}
-                      alt={tenant.name + ' logo'}
-                      className='object-contain w-full'
+                <div className='flex items-center gap-2 text-xs'>
+                  <div className='flex aspect-square size-4 items-center justify-center overflow-hidden rounded'>
+                    {firm.logo ? (
+                      <img
+                        src={firm.logo}
+                        alt={firm.name + ' logo'}
+                        className='w-full object-contain'
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                          const parent = e.currentTarget.parentElement;
+                          if (parent) {
+                            const fallback =
+                              parent.querySelector('.fallback-icon');
+                            if (fallback) {
+                              (fallback as HTMLElement).style.display = 'block';
+                            }
+                          }
+                        }}
+                      />
+                    ) : null}
+                    <Building2
+                      className={`fallback-icon size-3 ${firm.logo ? 'hidden' : 'block'}`}
+                      style={{ color: firm.theme_color || '#3b82f6' }}
                     />
                   </div>
-                  {tenant.name}
-                  {tenant.id === selectedTenant.id && (
+                  {firm.name}
+                  {firm.id === selectedTenant.id && (
                     <Check className='ml-auto' />
                   )}
                 </div>
               </DropdownMenuItem>
             ))}
+            <DropdownMenuSeparator />
+            <div
+              onSelect={(e) => {
+                e.preventDefault(); // Prevent dropdown from closing
+              }}
+            >
+              <NewFirmDialog onFirmCreated={handleFirmCreated} />
+            </div>
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>
