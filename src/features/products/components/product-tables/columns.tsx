@@ -34,7 +34,7 @@ export const columns: ColumnDef<Product>[] = [
     cell: ({ cell }) => <div>{cell.getValue<Product['name']>()}</div>,
     meta: {
       label: 'Name',
-      placeholder: 'Search products...',
+      placeholder: 'rechercher des produits...',
       variant: 'text',
       icon: Text
     },
@@ -44,7 +44,7 @@ export const columns: ColumnDef<Product>[] = [
     id: 'category',
     accessorKey: 'category',
     header: ({ column }: { column: Column<Product, unknown> }) => (
-      <DataTableColumnHeader column={column} title='Category' />
+      <DataTableColumnHeader column={column} title='Categorie' />
     ),
     cell: ({ cell }) => {
       const status = cell.getValue<Product['category']>();
@@ -59,7 +59,7 @@ export const columns: ColumnDef<Product>[] = [
     },
     enableColumnFilter: true,
     meta: {
-      label: 'categories',
+      label: 'Catégories',
       variant: 'multiSelect',
       options: CATEGORY_OPTIONS
     }

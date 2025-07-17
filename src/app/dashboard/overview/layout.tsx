@@ -56,12 +56,6 @@ export default function OverViewLayout({
         </div>
 
         {/* Alert Banners */}
-        <SpinnerCircular
-          size={'2rem'}
-          color='var(--accent-foreground)'
-          secondaryColor='var(--secondary)'
-          thickness={180}
-        />
         <div className='grid grid-cols-1 gap-3 md:grid-cols-3'>
           <Card className='text-accent-foreground flex flex-row items-center justify-between pr-6'>
             <CardHeader className='w-full pb-3'>

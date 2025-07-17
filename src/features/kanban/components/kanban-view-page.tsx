@@ -8,7 +8,7 @@ export default function KanbanViewPage() {
     <PageContainer>
       <div className='space-y-4'>
         <div className='flex items-start justify-between'>
-          <Heading title={`Kanban`} description='Manage tasks by dnd' />
+          <Heading title={`Kanban`} description='Gestion des tâches par glisser-déposer' />
           <NewTaskDialog />
         </div>
         <KanbanBoard />
