@@ -1,12 +1,13 @@
+// src/components/user-avatar-profile.tsx
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface UserAvatarProfileProps {
   className?: string;
   showInfo?: boolean;
   user: {
-    imageUrl?: string;
-    fullName?: string | null;
-    emailAddresses: Array<{ emailAddress: string }>;
+    avatar_url?: string | null;
+    full_name?: string | null;
+    email?: string;
   } | null;
 }
 
@@ -15,20 +16,34 @@ export function UserAvatarProfile({
   showInfo = false,
   user
 }: UserAvatarProfileProps) {
+  const initials = user?.full_name
+    ? user.full_name
+        .split(' ')
+        .map(n => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2)
+    : user?.email
+        ?.split('@')[0]
+        .slice(0, 2)
+        .toUpperCase() || 'UN';
+
   return (
     <div className='flex items-center gap-2'>
       <Avatar className={className}>
-        <AvatarImage src={user?.imageUrl || ''} alt={user?.fullName || ''} />
+        <AvatarImage src={user?.avatar_url || ''} alt={user?.full_name || ''} />
         <AvatarFallback className='rounded-lg'>
-          {user?.fullName?.slice(0, 2)?.toUpperCase() || 'CN'}
+          {initials}
         </AvatarFallback>
       </Avatar>
 
       {showInfo && (
         <div className='grid flex-1 text-left text-sm leading-tight'>
-          <span className='truncate font-semibold'>{user?.fullName || ''}</span>
+          <span className='truncate font-semibold'>
+            {user?.full_name || user?.email?.split('@')[0] || 'Utilisateur'}
+          </span>
           <span className='truncate text-xs'>
-            {user?.emailAddresses[0].emailAddress || ''}
+            {user?.email || ''}
           </span>
         </div>
       )}

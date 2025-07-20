@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback, useTransition } from 'react';
 import { Plus, Upload } from 'lucide-react';
-import { createClient } from '@/app/utils/supabase/client';
+import { createClient } from '@/lib/supabase/client';
+import { useAuth } from '@/lib/auth/auth-provider';
 import {
   Dialog,
   DialogContent,
@@ -24,9 +25,10 @@ import {
   SelectValue
 } from '@/components/ui/select';
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
+import { toast } from 'sonner'; // If you have sonner, otherwise use alert
 
 interface NewFirmDialogProps {
-  onFirmCreated: () => void; // Callback to refresh the firms list
+  onFirmCreated: () => void;
 }
 
 interface FormData {
@@ -62,7 +64,9 @@ const THEME_COLORS = [
 
 export function NewFirmDialog({ onFirmCreated }: NewFirmDialogProps) {
   const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const { user } = useAuth();
+  
   const [formData, setFormData] = useState<FormData>({
     name: '',
     type: '',
@@ -71,64 +75,93 @@ export function NewFirmDialog({ onFirmCreated }: NewFirmDialogProps) {
     theme_color: '#3b82f6'
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const resetForm = useCallback(() => {
+    setFormData({
+      name: '',
+      type: '',
+      description: '',
+      logo: '',
+      theme_color: '#3b82f6'
+    });
+  }, []);
+
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-
-    try {
-      const supabase = createClient();
-
-      // Get the senexus group (assuming there's only one for now)
-      const { data: groups, error: groupError } = await supabase
-        .from('senexus_groups')
-        .select('id')
-        .limit(1);
-
-      if (groupError || !groups || groups.length === 0) {
-        throw new Error('Aucun groupe Senexus trouvé');
-      }
-
-      // Create the new firm
-      const { error: firmError } = await supabase.from('firms').insert({
-        senexus_group_id: groups[0].id,
-        name: formData.name,
-        type: formData.type,
-        description: formData.description,
-        logo: formData.logo || null,
-        theme_color: formData.theme_color,
-        is_active: true
-      });
-
-      if (firmError) {
-        throw firmError;
-      }
-
-      // Reset form and close dialog
-      setFormData({
-        name: '',
-        type: '',
-        description: '',
-        logo: '',
-        theme_color: '#3b82f6'
-      });
-      setOpen(false);
-      onFirmCreated(); // Refresh the firms list
-    } catch (error) {
-      console.error('Erreur lors de la création de la firme:', error);
-      alert(
-        `Erreur: ${error instanceof Error ? error.message : 'Erreur inconnue'}`
-      );
-    } finally {
-      setLoading(false);
+    
+    if (!user) {
+      toast?.error?.('Vous devez être connecté pour créer une firme') || alert('Vous devez être connecté');
+      return;
     }
-  };
 
-  const handleInputChange = (field: keyof FormData, value: string) => {
+    startTransition(async () => {
+      try {
+        const supabase = createClient();
+
+        // Get the senexus group efficiently
+        const { data: groups, error: groupError } = await supabase
+          .from('senexus_groups')
+          .select('id')
+          .limit(1)
+          .single(); // Use single() instead of limit(1) with array access
+
+        if (groupError || !groups) {
+          throw new Error('Aucun groupe Senexus trouvé');
+        }
+
+        // Create the new firm with optimized query
+        const { data: newFirm, error: firmError } = await supabase
+          .from('firms')
+          .insert({
+            senexus_group_id: groups.id,
+            name: formData.name.trim(),
+            type: formData.type,
+            description: formData.description.trim() || null,
+            logo: formData.logo.trim() || null,
+            theme_color: formData.theme_color,
+            is_active: true,
+            created_by: user.id // Add the user who created it
+          })
+          .select()
+          .single();
+
+        if (firmError) {
+          throw firmError;
+        }
+
+        // Success feedback
+        toast?.success?.('Firme créée avec succès!') || console.log('Firme créée avec succès!');
+        
+        // Reset form and close dialog
+        resetForm();
+        setOpen(false);
+        
+        // Notify parent component to refresh
+        onFirmCreated();
+
+      } catch (error) {
+        console.error('Erreur lors de la création de la firme:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
+        toast?.error?.(`Erreur: ${errorMessage}`) || alert(`Erreur: ${errorMessage}`);
+      }
+    });
+  }, [formData, user, onFirmCreated, resetForm]);
+
+  const handleInputChange = useCallback((field: keyof FormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-  };
+  }, []);
+
+  const handleOpenChange = useCallback((newOpen: boolean) => {
+    if (!newOpen && isPending) {
+      return; // Prevent closing during submission
+    }
+    setOpen(newOpen);
+    if (!newOpen) {
+      resetForm(); // Reset form when closing
+    }
+  }, [isPending, resetForm]);
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <DropdownMenuItem
           onSelect={(e) => {
@@ -145,7 +178,15 @@ export function NewFirmDialog({ onFirmCreated }: NewFirmDialogProps) {
         </DropdownMenuItem>
       </DialogTrigger>
 
-      <DialogContent className='sm:max-w-[500px]'>
+      <DialogContent 
+        className='sm:max-w-[500px]'
+        onPointerDownOutside={(e) => {
+          if (isPending) e.preventDefault();
+        }}
+        onEscapeKeyDown={(e) => {
+          if (isPending) e.preventDefault();
+        }}
+      >
         <DialogHeader>
           <DialogTitle>Créer une nouvelle firme</DialogTitle>
           <DialogDescription>
@@ -163,6 +204,8 @@ export function NewFirmDialog({ onFirmCreated }: NewFirmDialogProps) {
                 onChange={(e) => handleInputChange('name', e.target.value)}
                 placeholder='ex: Ma Nouvelle Entreprise'
                 required
+                disabled={isPending}
+                maxLength={100}
               />
             </div>
 
@@ -172,6 +215,7 @@ export function NewFirmDialog({ onFirmCreated }: NewFirmDialogProps) {
                 value={formData.type}
                 onValueChange={(value) => handleInputChange('type', value)}
                 required
+                disabled={isPending}
               >
                 <SelectTrigger>
                   <SelectValue placeholder='Sélectionner...' />
@@ -195,6 +239,8 @@ export function NewFirmDialog({ onFirmCreated }: NewFirmDialogProps) {
               onChange={(e) => handleInputChange('description', e.target.value)}
               placeholder="Brève description de l'activité de la firme..."
               rows={3}
+              disabled={isPending}
+              maxLength={500}
             />
           </div>
 
@@ -206,6 +252,7 @@ export function NewFirmDialog({ onFirmCreated }: NewFirmDialogProps) {
                 value={formData.logo}
                 onChange={(e) => handleInputChange('logo', e.target.value)}
                 placeholder='/assets/img/icons/mon-logo.png'
+                disabled={isPending}
               />
               <Button type='button' variant='outline' size='icon' disabled>
                 <Upload className='size-4' />
@@ -234,11 +281,12 @@ export function NewFirmDialog({ onFirmCreated }: NewFirmDialogProps) {
                   key={color.value}
                   type='button'
                   onClick={() => handleInputChange('theme_color', color.value)}
-                  className={`flex items-center gap-2 rounded-md border px-3 py-1 text-sm ${
+                  disabled={isPending}
+                  className={`flex items-center gap-2 rounded-md border px-3 py-1 text-sm transition-colors ${
                     formData.theme_color === color.value
                       ? 'border-primary bg-primary/10'
                       : 'border-border hover:bg-muted'
-                  }`}
+                  } disabled:opacity-50`}
                 >
                   <div
                     className='size-4 rounded-full border'
@@ -253,6 +301,7 @@ export function NewFirmDialog({ onFirmCreated }: NewFirmDialogProps) {
               value={formData.theme_color}
               onChange={(e) => handleInputChange('theme_color', e.target.value)}
               className='h-8 w-20'
+              disabled={isPending}
             />
           </div>
 
@@ -261,15 +310,15 @@ export function NewFirmDialog({ onFirmCreated }: NewFirmDialogProps) {
               type='button'
               variant='outline'
               onClick={() => setOpen(false)}
-              disabled={loading}
+              disabled={isPending}
             >
               Annuler
             </Button>
             <Button
               type='submit'
-              disabled={loading || !formData.name || !formData.type}
+              disabled={isPending || !formData.name.trim() || !formData.type}
             >
-              {loading ? 'Création...' : 'Créer la firme'}
+              {isPending ? 'Création...' : 'Créer la firme'}
             </Button>
           </DialogFooter>
         </form>

@@ -2,7 +2,7 @@
 
 import { Check, ChevronsUpDown, Plus, Building2 } from 'lucide-react';
 import * as React from 'react';
-import { createClient } from '@/app/utils/supabase/client';
+import { createClient } from '@/lib/supabase/client';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -85,15 +85,40 @@ export function OrgSwitcher({
   const [selectedTenant, setSelectedTenant] = React.useState<Firm | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [cookiesLoaded, setCookiesLoaded] = React.useState(false);
+  const [initialLoadCompleted, setInitialLoadCompleted] = React.useState(false);
+
+  // Add performance optimization
+  const firmsCache = React.useRef<Firm[]>([]);
+  const lastFetch = React.useRef<number>(0);
+  const isFetching = React.useRef<boolean>(false);
 
   // Load saved firm ID from cookie on client-side only
   React.useEffect(() => {
     setCookiesLoaded(true);
   }, []);
 
-  // Fetch firms from database
-  const fetchFirms = React.useCallback(async () => {
+  // Optimized fetch with caching and debouncing
+  const fetchFirms = React.useCallback(async (forceRefresh = false) => {
+    // Prevent unnecessary fetches
+    if (initialLoadCompleted && !forceRefresh) {
+      return;
+    }
+
+    // Prevent concurrent fetches
+    if (isFetching.current) {
+      return;
+    }
+
+    // Use cache if recent (30 seconds)
+    const now = Date.now();
+    if (!forceRefresh && firmsCache.current.length > 0 && (now - lastFetch.current) < 30000) {
+      setFirms(firmsCache.current);
+      setLoading(false);
+      return;
+    }
+
     try {
+      isFetching.current = true;
       setLoading(true);
       const supabase = createClient();
 
@@ -109,6 +134,10 @@ export function OrgSwitcher({
       }
 
       const firmsData = data || [];
+      
+      // Update cache
+      firmsCache.current = firmsData;
+      lastFetch.current = now;
       setFirms(firmsData);
 
       // Set selected firm based on cookie or default to first firm
@@ -117,63 +146,60 @@ export function OrgSwitcher({
         let firmToSelect: Firm | null = null;
 
         if (savedFirmId) {
-          // Try to find the saved firm
-          firmToSelect =
-            firmsData.find((firm) => firm.id === savedFirmId) || null;
+          firmToSelect = firmsData.find((firm) => firm.id === savedFirmId) || null;
         }
 
-        // If no saved firm found or no saved firm, use first firm
         if (!firmToSelect) {
           firmToSelect = firmsData[0];
         }
 
-        if (
-          firmToSelect &&
-          (!selectedTenant || selectedTenant.id !== firmToSelect.id)
-        ) {
+        if (firmToSelect && (!selectedTenant || selectedTenant.id !== firmToSelect.id)) {
           setSelectedTenant(firmToSelect);
           setActiveTheme(getThemeFromColor(firmToSelect.theme_color));
-
-          // Save to cookie
           setCookie(SELECTED_FIRM_COOKIE, firmToSelect.id);
 
-          // Notify parent component
           if (onTenantSwitch) {
             onTenantSwitch(firmToSelect.id);
           }
         }
       }
+
+      if (!initialLoadCompleted) {
+        setInitialLoadCompleted(true);
+      }
     } catch (error) {
       console.error('Error fetching firms:', error);
     } finally {
       setLoading(false);
+      isFetching.current = false;
     }
-  }, [cookiesLoaded, selectedTenant, setActiveTheme, onTenantSwitch]);
+  }, [cookiesLoaded, selectedTenant, setActiveTheme, onTenantSwitch, initialLoadCompleted]);
 
-  // Load firms when cookies are loaded
+  // Load firms when cookies are loaded - only run once initially
   React.useEffect(() => {
-    if (cookiesLoaded) {
+    if (cookiesLoaded && !initialLoadCompleted && !isFetching.current) {
       fetchFirms();
     }
-  }, [cookiesLoaded, fetchFirms]);
+  }, [cookiesLoaded, initialLoadCompleted, fetchFirms]);
 
-  const handleTenantSwitch = (firm: Firm) => {
+  const handleTenantSwitch = React.useCallback((firm: Firm) => {
     setSelectedTenant(firm);
     setActiveTheme(getThemeFromColor(firm.theme_color));
-
-    // Save selection to cookie
     setCookie(SELECTED_FIRM_COOKIE, firm.id);
 
     if (onTenantSwitch) {
       onTenantSwitch(firm.id);
     }
-  };
+  }, [setActiveTheme, onTenantSwitch]);
 
-  const handleFirmCreated = () => {
-    // Refresh the firms list when a new firm is created
-    fetchFirms();
-  };
+  const handleFirmCreated = React.useCallback(() => {
+    // Clear cache and force refresh
+    firmsCache.current = [];
+    lastFetch.current = 0;
+    fetchFirms(true);
+  }, [fetchFirms]);
 
+  // Rest of your component remains the same but with performance optimizations...
   // Show loading state
   if (loading || !cookiesLoaded) {
     return (
@@ -262,7 +288,6 @@ export function OrgSwitcher({
                     alt={selectedTenant.name + ' logo'}
                     className='w-full object-contain'
                     onError={(e) => {
-                      // Fallback to building icon if logo fails to load
                       e.currentTarget.style.display = 'none';
                       const parent = e.currentTarget.parentElement;
                       if (parent) {
@@ -309,8 +334,7 @@ export function OrgSwitcher({
                           e.currentTarget.style.display = 'none';
                           const parent = e.currentTarget.parentElement;
                           if (parent) {
-                            const fallback =
-                              parent.querySelector('.fallback-icon');
+                            const fallback = parent.querySelector('.fallback-icon');
                             if (fallback) {
                               (fallback as HTMLElement).style.display = 'block';
                             }
@@ -333,7 +357,7 @@ export function OrgSwitcher({
             <DropdownMenuSeparator />
             <div
               onSelect={(e) => {
-                e.preventDefault(); // Prevent dropdown from closing
+                e.preventDefault();
               }}
             >
               <NewFirmDialog onFirmCreated={handleFirmCreated} />
