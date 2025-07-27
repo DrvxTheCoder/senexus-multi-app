@@ -7,6 +7,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
+import { SpinnerCircular } from 'spinners-react';
+import { TextShimmer } from 'components/motion-primitives/text-shimmer';
+import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
+import { AlertCircleIcon } from 'lucide-react';
 
 export function LoginForm() {
   const [email, setEmail] = useState('');
@@ -47,9 +51,13 @@ export function LoginForm() {
       <CardContent>
         <form onSubmit={handleLogin} className="space-y-4">
           {error && (
-            <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
-              {error}
-            </div>
+          <Alert variant="destructive">
+            <AlertCircleIcon />
+            <AlertTitle>Echec lors de la tentative de connexion</AlertTitle>
+            <AlertDescription>
+              <p>Détails: ({error})</p>
+            </AlertDescription>
+          </Alert>
           )}
           
           <div className="space-y-2">
@@ -79,7 +87,19 @@ export function LoginForm() {
           </div>
           
           <Button type="submit" disabled={loading} className="w-full">
-            {loading ? 'Connexion...' : 'Se connecter'}
+            {loading ? (
+                          <>
+                            <SpinnerCircular
+                              size={'1rem'}
+                              color='var(--accent-foreground)'
+                              secondaryColor='var(--secondary)'
+                              thickness={180}
+                            />
+                            <TextShimmer className='font-mono' duration={1}>
+                              Connexion en cours...
+                            </TextShimmer>
+                          </>
+            ) : 'Se connecter'}
           </Button>
         </form>
         

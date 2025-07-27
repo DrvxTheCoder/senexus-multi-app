@@ -53,23 +53,6 @@ export default function SignInViewPage() {
 
           <LoginForm />
 
-          <p className='text-muted-foreground px-8 text-center text-sm'>
-            En cliquant sur continuer, vous acceptez nos{' '}
-            <Link
-              href='/terms'
-              className='hover:text-primary underline underline-offset-4'
-            >
-              Conditions d&apos;utilisation
-            </Link>{' '}
-            et{' '}
-            <Link
-              href='/privacy'
-              className='hover:text-primary underline underline-offset-4'
-            >
-              Politique de confidentialité
-            </Link>
-            .
-          </p>
         </div>
       </div>
     </div>
