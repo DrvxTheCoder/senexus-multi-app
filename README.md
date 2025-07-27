@@ -1,115 +1,144 @@
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/9113740/201498864-2a900c64-d88f-4ed4-b5cf-770bcb57e1f5.png">
-  <source media="(prefers-color-scheme: light)" srcset="https://user-images.githubusercontent.com/9113740/201498152-b171abb8-9225-487a-821c-6ff49ee48579.png">
-</picture>
+## Titre
+**"Conception et développement d'une plateforme SaaS multi-tenant modulaire avec tableaux de bord intelligents : Une alternative moderne aux ERP traditionnels pour PME"**
 
-<div align="center"><strong>Next.js Admin Dashboard Starter Template With Shadcn-ui</strong></div>
-<div align="center">Built with the Next.js 15 App Router</div>
-<br />
-<div align="center">
-<a href="https://dub.sh/shadcn-dashboard">View Demo</a>
-<span>
-</div>
+*Une approche centrée utilisateur du Business Intelligence et du développement Web moderne pour l'optimisation de la gestion multi-entreprises à coût maîtrisé*
 
-## Overview
+---
 
-This is a starter template using the following stack:
+## I. CONTEXTE ET PROBLÉMATIQUE
 
-- Framework - [Next.js 15](https://nextjs.org/13)
-- Language - [TypeScript](https://www.typescriptlang.org)
-- Auth - [Clerk](https://go.clerk.com/ILdYhn7)
-- Error tracking - [<picture><img alt="Sentry" src="public/assets/sentry.svg">
-        </picture>](https://sentry.io/for/nextjs/?utm_source=github&utm_medium=paid-community&utm_campaign=general-fy26q2-nextjs&utm_content=github-banner-project-tryfree)
-- Styling - [Tailwind CSS v4](https://tailwindcss.com)
-- Components - [Shadcn-ui](https://ui.shadcn.com)
-- Schema Validations - [Zod](https://zod.dev)
-- State Management - [Zustand](https://zustand-demo.pmnd.rs)
-- Search params state manager - [Nuqs](https://nuqs.47ng.com/)
-- Tables - [Tanstack Data Tables](https://ui.shadcn.com/docs/components/data-table) • [Dice table](https://www.diceui.com/docs/components/data-table)
-- Forms - [React Hook Form](https://ui.shadcn.com/docs/components/form)
-- Command+k interface - [kbar](https://kbar.vercel.app/)
-- Linting - [ESLint](https://eslint.org)
-- Pre-commit Hooks - [Husky](https://typicode.github.io/husky/)
-- Formatting - [Prettier](https://prettier.io)
+Dans un marché dominé par des solutions ERP complexes et coûteuses comme Odoo, SAP ou Microsoft Dynamics, les petites et moyennes entreprises peinent à trouver des solutions adaptées à leur échelle et leur budget. Le groupe Senexus, avec ses trois entités distinctes (Connect Interim, SynergiePro, IPM Tawfeikh), illustre parfaitement cette problématique nécessitant une solution technologique moderne qui concilie fonctionnalités avancées, expérience utilisateur optimale et coût maîtrisé.
 
-_If you are looking for a Tanstack start dashboard template, here is the [repo](https://git.new/tanstack-start-dashboard)._
+**Problématique centrale :** Comment concevoir et développer une plateforme SaaS multi-tenant modulaire intégrant des fonctionnalités de Business Intelligence, offrant une alternative moderne et accessible aux ERP traditionnels pour les PME, sans compromettre l'expérience utilisateur au profit de la fonctionnalité ?
 
-## Pages
+---
 
-| Pages                                                                                 | Specifications                                                                                                                                                                                                                                                          |
-| :------------------------------------------------------------------------------------ | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [Signup / Signin](https://go.clerk.com/ILdYhn7)      | Authentication with **Clerk** provides secure authentication and user management with multiple sign-in options including passwordless authentication, social logins, and enterprise SSO - all designed to enhance security while delivering a seamless user experience. |
-| [Dashboard (Overview)](https://shadcn-dashboard.kiranism.dev/dashboard)    | Cards with Recharts graphs for analytics. Parallel routes in the overview sections feature independent loading, error handling, and isolated component rendering. |
-| [Product](https://shadcn-dashboard.kiranism.dev/dashboard/product)         | Tanstack tables with server side searching, filter, pagination by Nuqs which is a Type-safe search params state manager in nextjs                                                                                                                                       |
-| [Product/new](https://shadcn-dashboard.kiranism.dev/dashboard/product/new) | A Product Form with shadcn form (react-hook-form + zod).                                                                                                                                                                                                                |
-| [Profile](https://shadcn-dashboard.kiranism.dev/dashboard/profile)         | Clerk's full-featured account management UI that allows users to manage their profile and security settings                                                                                                                                                             |
-| [Kanban Board](https://shadcn-dashboard.kiranism.dev/dashboard/kanban)     | A Drag n Drop task management board with dnd-kit and zustand to persist state locally.                                                                                                                                                                                  |
-| [Not Found](https://shadcn-dashboard.kiranism.dev/dashboard/notfound)      | Not Found Page Added in the root level                                                                                                                                                                                                                                  |
-| [Global Error](https://sentry.io/for/nextjs/?utm_source=github&utm_medium=paid-community&utm_campaign=general-fy26q2-nextjs&utm_content=github-banner-project-tryfree)           | A centralized error page that captures and displays errors across the application. Integrated with **Sentry** to log errors, provide detailed reports, and enable replay functionality for better debugging. |
+## II. INNOVATION PROPOSÉE
 
-## Feature based organization
+### Notre Proposition de Valeur
+- **Architecture modulaire innovante** : Activation sélective des fonctionnalités selon les besoins spécifiques de chaque entreprise
+- **UX-first approach** : Priorité à l'expérience utilisateur sans sacrifier les fonctionnalités métier
+- **BI intégrée native** : Tableaux de bord intelligents comme composant central, non comme ajout
+- **Coût maîtrisé** : Infrastructure cloud moderne réduisant drastiquement les coûts opérationnels
+- **Déploiement rapide** : Configuration en heures au lieu de mois
 
-```plaintext
-src/
-├── app/ # Next.js App Router directory
-│ ├── (auth)/ # Auth route group
-│ │ ├── (signin)/
-│ ├── (dashboard)/ # Dashboard route group
-│ │ ├── layout.tsx
-│ │ ├── loading.tsx
-│ │ └── page.tsx
-│ └── api/ # API routes
-│
-├── components/ # Shared components
-│ ├── ui/ # UI components (buttons, inputs, etc.)
-│ └── layout/ # Layout components (header, sidebar, etc.)
-│
-├── features/ # Feature-based modules
-│ ├── feature/
-│ │ ├── components/ # Feature-specific components
-│ │ ├── actions/ # Server actions
-│ │ ├── schemas/ # Form validation schemas
-│ │ └── utils/ # Feature-specific utilities
-│ │
-├── lib/ # Core utilities and configurations
-│ ├── auth/ # Auth configuration
-│ ├── db/ # Database utilities
-│ └── utils/ # Shared utilities
-│
-├── hooks/ # Custom hooks
-│ └── use-debounce.ts
-│
-├── stores/ # Zustand stores
-│ └── dashboard-store.ts
-│
-└── types/ # TypeScript types
-└── index.ts
+### Architecture Modulaire Proposée
+```
+┌─ Modules Métier Activables ─────────────────────┐
+│ • HR (RH)           • Health Insurance (Santé)  │
+│ • Finance           • CRM                       │
+│ • Procurement       • Projects                  │
+│ • Analytics         • Documents                 │
+└─────────────────────────────────────────────────┘
+┌─ Infrastructure BI Native ──────────────────────┐
+│ • Tableaux de bord temps réel                   │
+│ • Pipeline de données automatisé                │
+│ • Visualisations interactives                   │
+│ • Système d'alertes intelligent                 │
+└─────────────────────────────────────────────────┘
+┌─ Socle Multi-Tenant Sécurisé ───────────────────┐
+│ • Isolation des données par organisation        │
+│ • Gestion des permissions granulaire            │
+│ • Authentification moderne (Supabase Auth)      │
+└─────────────────────────────────────────────────┘
 ```
 
-## Getting Started
+---
 
-> [!NOTE]  
-> We are using **Next 15** with **React 19**, follow these steps:
+## III. OBJECTIFS DE RECHERCHE
 
-Clone the repo:
+### Objectif Général
+Développer une plateforme web moderne multi-tenant à architecture modulaire, intégrant des fonctionnalités de Business Intelligence avec une expérience utilisateur optimale, constituant une alternative viable et économique aux ERP traditionnels pour les PME.
 
-```
-git clone https://github.com/Kiranism/next-shadcn-dashboard-starter.git
-```
+### Objectifs Spécifiques
+1. **Innovation architecturale** : Concevoir un système modulaire permettant l'adaptation flexible aux besoins métier
+2. **Excellence UX/BI** : Intégrer des tableaux de bord intelligents sans compromettre la simplicité d'utilisation
+3. **Validation terrain** : Déployer et évaluer dans un contexte réel au sein du groupe Senexus
+4. **Démonstration économique** : Prouver la viabilité financière face aux solutions ERP traditionnelles
+5. **Contribution scientifique** : Établir un framework de référence pour l'intégration UX/BI dans les SaaS d'entreprise
 
-- `pnpm install` ( we have legacy-peer-deps=true added in the .npmrc)
-- Create a `.env.local` file by copying the example environment file:
-  `cp env.example.txt .env.local`
-- Add the required environment variables to the `.env.local` file.
-- `pnpm run dev`
+---
 
-##### Environment Configuration Setup
+## IV. MÉTHODOLOGIE ET APPROCHE
 
-To configure the environment for this project, refer to the `env.example.txt` file. This file contains the necessary environment variables required for authentication and error tracking.
+### Stack Technologique Moderne
+- **Frontend** : Next.js 15, React 19, TypeScript, Tailwind CSS v4
+- **Backend** : Supabase (PostgreSQL, Auth, Real-time, Edge Functions)
+- **Business Intelligence** : Composants de visualisation personnalisés (Chart.js, Recharts)
+- **UI/UX** : Design System basé sur Radix UI et Shadcn/ui
+- **Monitoring** : Sentry pour performance et error tracking
 
-You should now be able to access the application at http://localhost:3000.
+### Approche de Développement
+**Design-Driven Development** avec validation utilisateur continue, combiné à une architecture modulaire permettant l'activation sélective de fonctionnalités selon les besoins de chaque entreprise.
 
-> [!WARNING]
-> After cloning or forking the repository, be cautious when pulling or syncing with the latest changes, as this may result in breaking conflicts.
+### Cas d'Étude Terrain
+Déploiement et évaluation réels chez **Senexus Group** :
+- **Connect Interim** : Modules HR + Finance + CRM
+- **SynergiePro** : Modules HR + Projects + Analytics  
+- **IPM Tawfeikh** : Modules Health Insurance + Claims + Provider Network
 
-Cheers! 🥂
+---
+
+## V. CONTRIBUTIONS ATTENDUES
+
+### Contribution Scientifique
+- **Framework d'intégration UX/BI** : Méthodologie pour incorporer des fonctionnalités BI sans compromettre l'expérience utilisateur
+- **Architecture de référence** : Modèle pour SaaS modulaire multi-tenant avec BI native
+- **Analyse comparative** : Évaluation quantitative face aux solutions ERP traditionnelles
+
+### Contribution Technique
+- **Plateforme opérationnelle** : Solution déployée en production avec métriques d'usage réelles
+- **Patterns réutilisables** : Architecture et composants open-source pour la communauté
+- **Innovation modulaire** : Système d'activation dynamique de fonctionnalités par tenant
+
+### Impact Pratique et Économique
+- **Validation commerciale** : Démonstration de viabilité économique avec ROI mesurable
+- **Réduction des coûts IT** : Alternative à coût maîtrisé aux ERP traditionnels
+- **Amélioration opérationnelle** : Gains de productivité mesurés via les fonctionnalités BI
+
+---
+
+## VI. QUESTIONS DE RECHERCHE SPÉCIFIQUES
+
+1. **Architecture modulaire** : Comment concevoir un système permettant l'activation sélective de fonctionnalités tout en maintenant la cohérence des données et de l'expérience utilisateur ?
+
+2. **Intégration UX/BI** : Quelles sont les stratégies d'intégration de fonctionnalités BI avancées qui préservent la simplicité d'utilisation pour les utilisateurs non-techniques ?
+
+3. **Multi-tenancy sécurisé** : Comment garantir l'isolation et la sécurité des données dans un contexte multi-tenant tout en optimisant les performances ?
+
+4. **Viabilité économique** : Dans quelle mesure une approche "cloud-native" peut-elle réduire le coût total de possession comparé aux ERP traditionnels ?
+
+---
+
+## VII. MÉTRICS D'ÉVALUATION
+
+### Métriques Techniques
+- **Performance** : Temps de réponse, scalabilité, disponibilité
+- **Sécurité** : Isolation des données, conformité RGPD
+- **Maintenabilité** : Qualité du code, couverture de tests
+
+### Métriques Business Intelligence
+- **Adoption** : Taux d'utilisation des tableaux de bord par les utilisateurs finaux
+- **Efficacité** : Réduction du temps d'accès à l'information critique
+- **Prise de décision** : Amélioration de la qualité et rapidité des décisions métier
+
+### Métriques Utilisateur
+- **Satisfaction** : Net Promoter Score (NPS), System Usability Scale (SUS)
+- **Productivité** : Temps de formation, taux d'erreur, efficacité des tâches
+- **Adoption** : Courbe d'adoption et rétention utilisateur
+
+---
+
+## VIII. VALIDATION TERRAIN
+
+Le projet sera déployé en production chez **Senexus Group**, permettant une validation complète avec :
+- **Utilisateurs réels** : 15-20 utilisateurs actifs sur 3 entités distinctes
+- **Données réelles** : Migration et gestion des données opérationnelles existantes
+- **Métriques d'usage** : Collecte automatisée de données d'utilisation et performance
+- **Retour d'expérience** : Interviews utilisateurs et analyse d'impact organisationnel
+
+Cette validation terrain garantit la pertinence académique tout en démontrant la viabilité commerciale de la solution développée.
+
+---
+
+**Cette proposition combine recherche académique rigoureuse et innovation technique pratique, avec une validation terrain immédiate et un potentiel d'impact significatif sur l'écosystème des solutions d'entreprise pour PME.**
