@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/client'
+import { createServerComponentClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { ModuleUtils } from '@/types/modules'
 
@@ -24,7 +24,7 @@ export interface CreateFirmResult {
  */
 export async function createFirmWithModules(firmData: CreateFirmData): Promise<CreateFirmResult> {
   try {
-    const supabase = await createClient()
+    const supabase = await createServerComponentClient()
 
     // Get authenticated user
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -136,7 +136,7 @@ export async function createFirmWithModules(firmData: CreateFirmData): Promise<C
  */
 export async function getUserFirms() {
   try {
-    const supabase = await createClient()
+    const supabase = await createServerComponentClient()
 
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
@@ -165,7 +165,7 @@ export async function getUserFirms() {
  */
 export async function updateFirm(firmId: string, updateData: Partial<CreateFirmData>) {
   try {
-    const supabase = await createClient()
+    const supabase = await createServerComponentClient()
 
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
@@ -214,7 +214,7 @@ export async function updateFirm(firmId: string, updateData: Partial<CreateFirmD
  */
 export async function deleteFirm(firmId: string) {
   try {
-    const supabase = await createClient()
+    const supabase = createServerComponentClient()
 
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {

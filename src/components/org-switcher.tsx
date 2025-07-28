@@ -20,6 +20,7 @@ import { useThemeConfig } from '@/components/active-theme';
 import { NewFirmDialog } from '@/components/new-firm-dialog';
 import { TextShimmer } from 'components/motion-primitives/text-shimmer';
 import { SpinnerCircular } from 'spinners-react';
+import Link from 'next/link';
 
 interface Firm {
   id: string;
@@ -257,7 +258,16 @@ export function OrgSwitcher({
               className='w-[--radix-dropdown-menu-trigger-width]'
               align='start'
             >
-              <NewFirmDialog onFirmCreated={handleFirmCreated} />
+              <Link href='/dashboard/firmes/nouveau'>
+                <DropdownMenuItem>
+                  <div className='flex items-center justify-center rounded-md border bg-transparent p-1'>
+                    <Plus className='size-3' />
+                  </div>
+                  <div className='text-muted-foreground text-xs font-medium'>
+                    Nouveau
+                  </div>
+                </DropdownMenuItem>
+              </Link>
             </DropdownMenuContent>
           </DropdownMenu>
         </SidebarMenuItem>
@@ -355,13 +365,16 @@ export function OrgSwitcher({
               </DropdownMenuItem>
             ))}
             <DropdownMenuSeparator />
-            <div
-              onSelect={(e) => {
-                e.preventDefault();
-              }}
-            >
-              <NewFirmDialog onFirmCreated={handleFirmCreated} />
-            </div>
+              <Link href='/dashboard/firmes/nouveau'>
+                <DropdownMenuItem>
+                  <div className='flex items-center justify-center rounded-md border bg-transparent p-1'>
+                    <Plus className='size-3' />
+                  </div>
+                  <div className='text-muted-foreground text-xs font-medium'>
+                    Nouveau
+                  </div>
+                </DropdownMenuItem>
+              </Link>
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>

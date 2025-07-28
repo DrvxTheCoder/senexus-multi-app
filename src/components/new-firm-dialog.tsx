@@ -33,6 +33,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import { createFirmWithModules } from '@/actions/firm-actions';
 import { MODULE_CATEGORIES } from '@/types/modules';
+import { SpinnerCircular } from 'spinners-react';
 
 interface NewFirmDialogProps {
   onFirmCreated: () => void;
@@ -420,7 +421,12 @@ export function NewFirmDialog({ onFirmCreated }: NewFirmDialogProps) {
               {loadingModules ? (
                 <div className="flex items-center justify-center h-[60vh]">
                   <div className="text-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                    <SpinnerCircular
+                      size={'1rem'}
+                      color='var(--accent-foreground)'
+                      secondaryColor='var(--secondary)'
+                      thickness={180}
+                    />
                     <p className="text-sm text-muted-foreground">Chargement des modules...</p>
                   </div>
                 </div>

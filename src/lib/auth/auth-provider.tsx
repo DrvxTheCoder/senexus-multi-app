@@ -1,21 +1,22 @@
 'use client';
-import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
-import { User, Session } from '@supabase/supabase-js';
-import { createClient } from '../supabase/client';
-import { useRouter } from 'next/navigation';
 
-type Profile = {
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
+import { createClient } from '@/lib/supabase/client';
+import { User, Session } from '@supabase/supabase-js';
+import { useRouter, usePathname } from 'next/navigation';
+
+interface Profile {
   id: string;
   firm_id: string | null;
   email: string;
   full_name: string | null;
   avatar_url: string | null;
-  role: string;
+  role: 'admin' | 'manager' | 'user';
   created_at: string;
   updated_at: string;
-};
+}
 
-type AuthContextType = {
+interface AuthContextType {
   user: User | null;
   profile: Profile | null;
   session: Session | null;
@@ -24,20 +25,15 @@ type AuthContextType = {
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string, metadata?: any) => Promise<{ error: any }>;
   updateProfile: (updates: Partial<Profile>) => Promise<{ error: any }>;
-};
+}
 
-const AuthContext = createContext<AuthContextType>({
-  user: null,
-  profile: null,
-  session: null,
-  loading: true,
-  signOut: async () => {},
-  signIn: async () => ({ error: null }),
-  signUp: async () => ({ error: null }),
-  updateProfile: async () => ({ error: null }),
-});
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+interface AuthProviderProps {
+  children: React.ReactNode;
+}
+
+export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -45,21 +41,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [initialized, setInitialized] = useState(false);
   
   const router = useRouter();
+  const pathname = usePathname();
   const supabase = createClient();
   
-  // Use refs to prevent unnecessary re-renders
-  const profileCache = useRef<Map<string, Profile>>(new Map());
-  const lastProfileFetch = useRef<number>(0);
-  const isNavigating = useRef<boolean>(false);
-  
-  // Optimized profile fetching with caching and debouncing
-  const fetchProfile = useCallback(async (userId: string, force = false) => {
-    const now = Date.now();
-    const cacheKey = userId;
-    
-    // Check cache first (cache for 30 seconds)
-    if (!force && profileCache.current.has(cacheKey) && (now - lastProfileFetch.current) < 30000) {
-      return profileCache.current.get(cacheKey);
+  // Track navigation to prevent unwanted redirects
+  const isNavigating = useRef(false);
+  const lastAuthAction = useRef<'signin' | 'signout' | 'init' | null>(null);
+  const profileCache = useRef(new Map<string, Profile>());
+
+  const fetchProfile = useCallback(async (userId: string): Promise<Profile | null> => {
+    // Check cache first
+    if (profileCache.current.has(userId)) {
+      return profileCache.current.get(userId) || null;
     }
 
     try {
@@ -69,16 +62,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .eq('id', userId)
         .single();
 
-      if (error && error.code !== 'PGRST116') {
+      if (error || !data) {
         console.error('Error fetching profile:', error);
         return null;
       }
 
-      if (data) {
-        profileCache.current.set(cacheKey, data);
-        lastProfileFetch.current = now;
-      }
-
+      // Cache the profile
+      profileCache.current.set(userId, data);
       return data;
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -86,84 +76,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [supabase]);
 
-  // Optimized profile creation with better error handling
-  const createProfile = useCallback(async (user: User) => {
-    try {
-      const profileData = {
-        id: user.id,
-        email: user.email!,
-        full_name: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || null,
-        avatar_url: user.user_metadata?.avatar_url || null,
-        role: 'user'
-      };
-
-      const { data, error } = await supabase
-        .from('profiles')
-        .insert(profileData)
-        .select()
-        .single();
-
-      if (error) {
-        console.error('Error creating profile:', error);
-        return null;
-      }
-
-      // Update cache
-      profileCache.current.set(user.id, data);
-      return data;
-    } catch (error) {
-      console.error('Error creating profile:', error);
-      return null;
-    }
-  }, [supabase]);
-
-  // Initialize auth state only once
+  // Initialize auth state
   useEffect(() => {
-    if (initialized) return;
-
-    let isMounted = true;
+    let mounted = true;
 
     const initializeAuth = async () => {
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
+        const { data: { session: initialSession }, error } = await supabase.auth.getSession();
         
-        if (!isMounted) return;
+        if (!mounted) return;
 
         if (error) {
           console.error('Error getting session:', error);
           setLoading(false);
-          setInitialized(true);
           return;
         }
 
-        setSession(session);
-        setUser(session?.user ?? null);
-
-        if (session?.user) {
-          // Fetch profile without blocking the UI
-          fetchProfile(session.user.id).then(userProfile => {
-            if (!isMounted) return;
-            
-            if (!userProfile) {
-              // Try to create profile if it doesn't exist
-              createProfile(session.user).then(newProfile => {
-                if (isMounted) {
-                  setProfile(newProfile);
-                }
-              });
-            } else {
-              setProfile(userProfile);
-            }
-          });
+        if (initialSession?.user) {
+          setSession(initialSession);
+          setUser(initialSession.user);
+          
+          // Fetch profile
+          const userProfile = await fetchProfile(initialSession.user.id);
+          if (mounted) {
+            setProfile(userProfile);
+          }
         }
 
-        setLoading(false);
         setInitialized(true);
+        setLoading(false);
       } catch (error) {
         console.error('Error initializing auth:', error);
-        if (isMounted) {
+        if (mounted) {
           setLoading(false);
-          setInitialized(true);
         }
       }
     };
@@ -171,54 +116,60 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     initializeAuth();
 
     return () => {
-      isMounted = false;
+      mounted = false;
     };
-  }, [initialized, supabase.auth, fetchProfile, createProfile]);
+  }, [supabase.auth, fetchProfile]);
 
-  // Listen for auth changes (only after initialization)
+  // Listen for auth changes
   useEffect(() => {
     if (!initialized) return;
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state changed:', event);
-        
-        // Prevent navigation loops
-        if (isNavigating.current) return;
-        
+        console.log('Auth state change:', event, session?.user?.id);
+
+        // Update session and user state
         setSession(session);
-        setUser(session?.user ?? null);
+        setUser(session?.user || null);
 
         if (session?.user) {
-          // Non-blocking profile fetch
+          // Fetch profile for authenticated user
           const userProfile = await fetchProfile(session.user.id);
           setProfile(userProfile);
           
-          // Only redirect on sign in, not on token refresh
-          if (event === 'SIGNED_IN' && !isNavigating.current) {
-            isNavigating.current = true;
-            router.push('/dashboard/overview');
-            setTimeout(() => { isNavigating.current = false; }, 1000);
+          // Handle redirects based on the auth action and current path
+          if (event === 'SIGNED_IN' && lastAuthAction.current === 'signin') {
+            // Only redirect on explicit sign-in, not on token refresh
+            if (!isNavigating.current && !pathname.startsWith('/dashboard')) {
+              isNavigating.current = true;
+              router.push('/dashboard/overview');
+              setTimeout(() => { isNavigating.current = false; }, 1000);
+            }
+            lastAuthAction.current = null;
           }
         } else {
           setProfile(null);
           profileCache.current.clear();
           
-          // Only redirect on sign out, not on initialization
-          if (event === 'SIGNED_OUT' && !isNavigating.current) {
-            isNavigating.current = true;
-            router.push('/auth/sign-in');
-            setTimeout(() => { isNavigating.current = false; }, 1000);
+          // Handle sign out redirect
+          if (event === 'SIGNED_OUT' && lastAuthAction.current === 'signout') {
+            if (!isNavigating.current && pathname.startsWith('/dashboard')) {
+              isNavigating.current = true;
+              router.push('/auth/sign-in');
+              setTimeout(() => { isNavigating.current = false; }, 1000);
+            }
+            lastAuthAction.current = null;
           }
         }
       }
     );
 
     return () => subscription.unsubscribe();
-  }, [initialized, supabase.auth, fetchProfile, router]);
+  }, [initialized, supabase.auth, fetchProfile, router, pathname]);
 
   const signOut = useCallback(async () => {
     try {
+      lastAuthAction.current = 'signout';
       profileCache.current.clear();
       const { error } = await supabase.auth.signOut();
       if (error) {
@@ -231,12 +182,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = useCallback(async (email: string, password: string) => {
     try {
+      lastAuthAction.current = 'signin';
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
       return { error };
     } catch (error) {
+      lastAuthAction.current = null;
       return { error };
     }
   }, [supabase.auth]);
