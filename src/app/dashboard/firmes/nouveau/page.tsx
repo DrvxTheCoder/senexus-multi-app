@@ -22,6 +22,7 @@ import { toast } from 'sonner';
 import { createFirmWithModules } from '@/actions/firm-actions';
 import { MODULE_CATEGORIES } from '@/types/modules';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { IconCommand } from '@tabler/icons-react';
 
 interface Module {
   id: string;
@@ -71,7 +72,7 @@ export default function NewFirmPage() {
   const [themeColor, setThemeColor] = useState('#3b82f6');
   
   // Module state
-  const [modules, setModules] = useState<Module[]>([]);
+  const [firmModules, setFirmModules] = useState<Module[]>([]);
   const [selectedModules, setSelectedModules] = useState<Set<string>>(new Set());
   const [loadingModules, setLoadingModules] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -90,7 +91,7 @@ export default function NewFirmPage() {
         if (error) throw error;
         
         const moduleData = data || [];
-        setModules(moduleData);
+        setFirmModules(moduleData);
         
         // Auto-select core modules
         const coreModuleIds = new Set(
@@ -111,11 +112,11 @@ export default function NewFirmPage() {
 
   // Handle module selection
   const toggleModule = (moduleId: string) => {
-    const module = modules.find(m => m.id === moduleId);
-    if (!module) return;
+    const moduleFirm = firmModules.find(m => m.id === moduleId);
+    if (!moduleFirm) return;
 
     // Prevent disabling core modules
-    if (module.is_core && selectedModules.has(moduleId)) {
+    if (moduleFirm.is_core && selectedModules.has(moduleId)) {
       toast.warning('Les modules système ne peuvent pas être désactivés');
       return;
     }
@@ -128,9 +129,9 @@ export default function NewFirmPage() {
       newSelected.add(moduleId);
       
       // Auto-select dependencies
-      if (module.requires_modules) {
-        module.requires_modules.forEach(requiredSlug => {
-          const requiredModule = modules.find(m => m.slug === requiredSlug);
+      if (moduleFirm.requires_modules) {
+        moduleFirm.requires_modules.forEach(requiredSlug => {
+          const requiredModule = firmModules.find(m => m.slug === requiredSlug);
           if (requiredModule) {
             newSelected.add(requiredModule.id);
           }
@@ -189,7 +190,7 @@ export default function NewFirmPage() {
   };
 
   // Group modules by category
-  const modulesByCategory = modules.reduce((acc, module) => {
+  const modulesByCategory = firmModules.reduce((acc, module) => {
     const category = module.category || 'other';
     if (!acc[category]) acc[category] = [];
     acc[category].push(module);
@@ -363,7 +364,7 @@ export default function NewFirmPage() {
                                           color: module.color
                                         }}
                                       >
-                                        <Building2 className="h-4 w-4" />
+                                        <IconCommand className="h-4 w-4" />
                                       </div>
                                     </div>
                                     

@@ -21,6 +21,7 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from 'sonner';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface FormData {
   email: string;
@@ -134,119 +135,179 @@ export default function UserNouveauPage() {
     });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!user || !isAdmin) {
-      toast.error('Non autorisé');
-      return;
-    }
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  
+  if (!user || !isAdmin) {
+    toast.error('Non autorisé');
+    return;
+  }
 
-    // Validation
-    if (formData.password !== formData.confirmPassword) {
-      toast.error('Les mots de passe ne correspondent pas');
-      return;
-    }
+  // Validation
+  if (formData.password !== formData.confirmPassword) {
+    toast.error('Les mots de passe ne correspondent pas');
+    return;
+  }
 
-    if (formData.password.length < 6) {
-      toast.error('Le mot de passe doit contenir au moins 6 caractères');
-      return;
-    }
+  if (formData.password.length < 6) {
+    toast.error('Le mot de passe doit contenir au moins 6 caractères');
+    return;
+  }
 
-    setSaving(true);
+  setSaving(true);
 
-    try {
-      const supabase = createClient();
+  try {
+    const supabase = createClient();
+    console.log('=== CREATING USER WITH MANUAL EMAIL CONFIRMATION ===');
 
-      // Step 1: Create user account using regular signup
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: formData.email.trim(),
-        password: formData.password,
-        options: {
-          data: {
-            full_name: formData.full_name.trim(),
-            role: formData.role,
-            phone: formData.phone.trim() || null,
-            position: formData.position.trim() || null,
-            department: formData.department.trim() || null,
-            hire_date: formData.hire_date || null,
-            is_active: formData.is_active
-          }
+    // Step 1: Create user account
+    console.log('1. Creating auth user...');
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email: formData.email.trim(),
+      password: formData.password,
+      options: {
+        data: {
+          full_name: formData.full_name.trim(),
+          role: formData.role
         }
-      });
-
-      if (authError) throw authError;
-
-      if (!authData.user) {
-        throw new Error('Échec de la création du compte utilisateur');
       }
+    });
 
-      // Wait a moment for the profile to be created by triggers
-      await new Promise(resolve => setTimeout(resolve, 2000));
+    if (authError) throw authError;
+    if (!authData.user) throw new Error('Échec de la création du compte utilisateur');
 
-      // Step 2: Update the profile with role and additional info
-      const { error: profileError } = await supabase
+    console.log('2. Auth user created:', authData.user.id);
+
+    // Step 2: MANUALLY CONFIRM EMAIL using helper function
+    console.log('3. Manually confirming email...');
+    const { error: confirmError } = await supabase.rpc('confirm_user_email', {
+      user_id: authData.user.id
+    });
+
+    if (confirmError) {
+      console.warn('Email confirmation failed:', confirmError);
+      toast.warning('Utilisateur créé mais email non confirmé automatiquement. L\'utilisateur devra confirmer son email.');
+    } else {
+      console.log('4. Email confirmed successfully');
+    }
+
+    // Step 3: Wait for profile auto-creation
+    console.log('5. Waiting for profile creation...');
+    await new Promise(resolve => setTimeout(resolve, 1500));
+
+    // Step 4: Check if profile exists, create if needed
+    let { data: profile, error: profileCheckError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', authData.user.id)
+      .single();
+
+    if (profileCheckError && profileCheckError.code === 'PGRST116') {
+      // Profile doesn't exist, create it
+      console.log('6. Creating profile...');
+      const { data: newProfile, error: createProfileError } = await supabase
         .from('profiles')
-        .update({
-          full_name: formData.full_name.trim() || null,
+        .insert({
+          id: authData.user.id,
+          email: formData.email.trim(),
+          full_name: formData.full_name.trim(),
+          role: formData.role,
           phone: formData.phone.trim() || null,
           position: formData.position.trim() || null,
           department: formData.department.trim() || null,
+          hire_date: formData.hire_date || null,
+          is_active: formData.is_active
+        })
+        .select()
+        .single();
+
+      if (createProfileError) {
+        console.error('Profile creation failed:', createProfileError);
+        throw new Error(`Erreur lors de la création du profil: ${createProfileError.message}`);
+      }
+
+      profile = newProfile;
+      console.log('7. Profile created successfully');
+    } else if (profileCheckError) {
+      console.error('Profile check error:', profileCheckError);
+      throw new Error(`Erreur lors de la vérification du profil: ${profileCheckError.message}`);
+    } else {
+      // Profile exists, update it
+      console.log('6. Profile exists, updating...');
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({
+          full_name: formData.full_name.trim(),
           role: formData.role,
+          phone: formData.phone.trim() || null,
+          position: formData.position.trim() || null,
+          department: formData.department.trim() || null,
           hire_date: formData.hire_date || null,
           is_active: formData.is_active
         })
         .eq('id', authData.user.id);
 
-      if (profileError) {
-        console.error('Profile error:', profileError);
-        // Continue anyway - we can update manually later
+      if (updateError) {
+        console.warn('Profile update failed:', updateError);
       }
-
-      // Step 3: Create firm assignments if any selected
-      if (formData.assigned_firms.length > 0) {
-        const assignments = formData.assigned_firms.map(firmId => ({
-          user_id: authData.user!.id,
-          firm_id: firmId,
-          assigned_by: user.id,
-          is_active: true
-        }));
-
-        const { error: assignmentError } = await supabase
-          .from('user_firm_assignments')
-          .insert(assignments);
-
-        if (assignmentError) {
-          console.error('Assignment error:', assignmentError);
-          // Don't fail completely, just warn
-          toast.warning('Utilisateur créé mais erreur lors de l\'assignation aux firmes. Vous pouvez les assigner manuellement.');
-        }
-      }
-
-      toast.success('Utilisateur créé avec succès! Un email de confirmation a été envoyé à l\'utilisateur.');
-      router.push('/dashboard/utilisateurs');
-    } catch (error) {
-      console.error('Error creating user:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
-      
-      // Handle specific error cases
-      if (errorMessage.includes('already registered') || errorMessage.includes('User already registered')) {
-        toast.error('Cette adresse email est déjà utilisée');
-      } else if (errorMessage.includes('Invalid email')) {
-        toast.error('Adresse email invalide');
-      } else if (errorMessage.includes('Password')) {
-        toast.error('Le mot de passe ne respecte pas les critères requis');
-      } else if (errorMessage.includes('duplicate key')) {
-        toast.error('Un utilisateur avec cette email existe déjà');
-      } else if (errorMessage.includes('Email rate limit')) {
-        toast.error('Trop de tentatives. Veuillez attendre avant de créer un autre utilisateur.');
-      } else {
-        toast.error(`Erreur: ${errorMessage}`);
-      }
-    } finally {
-      setSaving(false);
     }
-  };
+
+    // Step 5: Create firm assignments if any selected
+    if (formData.assigned_firms.length > 0) {
+      console.log(`8. Creating ${formData.assigned_firms.length} firm assignments...`);
+      
+      // Ensure profile exists before creating assignments
+      if (!profile) {
+        throw new Error('Profile must exist before creating firm assignments');
+      }
+
+      const assignments = formData.assigned_firms.map(firmId => ({
+        user_id: authData.user?.id,
+        firm_id: firmId,
+        assigned_by: user.id,
+        is_active: true
+      }));
+
+      const { error: assignmentError } = await supabase
+        .from('user_firm_assignments')
+        .insert(assignments);
+
+      if (assignmentError) {
+        console.error('Assignment error:', assignmentError);
+        toast.warning('Utilisateur créé mais erreur lors de l\'assignation aux firmes. Vous pouvez les assigner manuellement.');
+      } else {
+        console.log('9. Firm assignments created successfully');
+      }
+    }
+
+    console.log('10. User creation completed successfully!');
+    toast.success('Utilisateur créé avec succès! L\'utilisateur peut maintenant se connecter immédiatement.');
+    router.push('/dashboard/utilisateurs');
+
+  } catch (error) {
+    console.error('Error creating user:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
+    
+    // Handle specific error cases
+    if (errorMessage.includes('already registered') || errorMessage.includes('User already registered')) {
+      toast.error('Cette adresse email est déjà utilisée');
+    } else if (errorMessage.includes('Invalid email')) {
+      toast.error('Adresse email invalide');
+    } else if (errorMessage.includes('Password')) {
+      toast.error('Le mot de passe ne respecte pas les critères requis');
+    } else if (errorMessage.includes('duplicate key')) {
+      toast.error('Un utilisateur avec cette email existe déjà');
+    } else if (errorMessage.includes('Email rate limit')) {
+      toast.error('Trop de tentatives. Veuillez attendre avant de créer un autre utilisateur.');
+    } else if (errorMessage.includes('Key is not present in table "profiles"')) {
+      toast.error('Erreur technique: Problème de création de profil. Veuillez réessayer.');
+    } else {
+      toast.error(`Erreur: ${errorMessage}`);
+    }
+  } finally {
+    setSaving(false);
+  }
+};
 
   // Auto-assign all firms for super users
   useEffect(() => {
@@ -266,7 +327,7 @@ export default function UserNouveauPage() {
   const isSuperUser = ['admin', 'owner', 'audit'].includes(formData.role);
 
   return (
-    <div className="min-h-screen bg-background">
+    <ScrollArea className="max-h-screen bg-background py-4 sm:py-8">
       <div className="container max-w-4xl mx-auto py-4 px-4 sm:py-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6 sm:mb-8">
@@ -296,7 +357,7 @@ export default function UserNouveauPage() {
                 Informations personnelles
               </CardTitle>
               <CardDescription>
-                Renseignez les informations de base de l'utilisateur
+                Renseignez les informations de base de l&apos;utilisateur
               </CardDescription>
             </CardHeader>
 
@@ -372,7 +433,7 @@ export default function UserNouveauPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="hire_date">Date d'embauche</Label>
+                  <Label htmlFor="hire_date">Date d&apos;embauche</Label>
                   <Input
                     id="hire_date"
                     type="date"
@@ -390,7 +451,7 @@ export default function UserNouveauPage() {
             <CardHeader>
               <CardTitle>Informations professionnelles</CardTitle>
               <CardDescription>
-                Définissez le rôle et les responsabilités de l'utilisateur
+                Définissez le rôle et les responsabilités de l&apos;utilisateur
               </CardDescription>
             </CardHeader>
 
@@ -402,7 +463,7 @@ export default function UserNouveauPage() {
                     id="position"
                     value={formData.position}
                     onChange={(e) => handleInputChange('position', e.target.value)}
-                    placeholder="Directeur Marketing"
+                    placeholder="Fonction"
                     disabled={saving}
                   />
                 </div>
@@ -413,7 +474,7 @@ export default function UserNouveauPage() {
                     id="department"
                     value={formData.department}
                     onChange={(e) => handleInputChange('department', e.target.value)}
-                    placeholder="Marketing & Communication"
+                    placeholder="Direction/Service"
                     disabled={saving}
                   />
                 </div>
@@ -435,7 +496,7 @@ export default function UserNouveauPage() {
                       <SelectItem key={role.value} value={role.value}>
                         <div>
                           <div className="font-medium">{role.label}</div>
-                          <div className="text-xs text-muted-foreground">{role.description}</div>
+                          {/* <div className="text-xs text-muted-foreground">{role.description}</div> */}
                         </div>
                       </SelectItem>
                     ))}
@@ -496,26 +557,22 @@ export default function UserNouveauPage() {
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <Label>Firmes sélectionnées ({formData.assigned_firms.length})</Label>
                       {!isSuperUser && (
-                        <div className="flex flex-col xs:flex-row gap-2">
+                        <div className="flex flex-row xs:flex-row gap-2">
                           <Button
                             type="button"
                             variant="outline"
                             size="sm"
-                            onClick={() => handleInputChange('assigned_firms', firms.map(f => f.id))}
+                            onClick={() => {
+                              if (formData.assigned_firms.length === firms.length) {
+                                handleInputChange('assigned_firms', []);
+                              } else {
+                                handleInputChange('assigned_firms', firms.map(f => f.id));
+                              }
+                            }}
                             disabled={saving}
                             className="text-xs"
                           >
-                            Tout sélectionner
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleInputChange('assigned_firms', [])}
-                            disabled={saving}
-                            className="text-xs"
-                          >
-                            Tout désélectionner
+                            {formData.assigned_firms.length === firms.length ? 'Tout désélectionner' : 'Tout sélectionner'}
                           </Button>
                         </div>
                       )}
@@ -618,10 +675,8 @@ export default function UserNouveauPage() {
           </Card>
 
           {/* Form Actions */}
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
-                <div className="flex flex-col xs:flex-row gap-2 order-2 sm:order-1">
+              <div className="flex flex-col sm:flex-row items-stretch justify-between gap-4 mb-8">
+                <div className="flex flex-row xs:flex-row gap-2 order-2 sm:order-1">
                   <Button
                     type="button"
                     variant="outline"
@@ -641,7 +696,13 @@ export default function UserNouveauPage() {
                 </div>
                 <Button 
                   type="submit" 
-                  disabled={saving || !formData.email || !formData.full_name || !formData.password || formData.password !== formData.confirmPassword}
+                  disabled={
+                    saving ||
+                    !formData.email.trim() ||
+                    !formData.full_name.trim() ||
+                    !formData.password ||
+                    formData.password !== formData.confirmPassword
+                  }
                   className="order-1 sm:order-2"
                 >
                   {saving ? (
@@ -652,15 +713,13 @@ export default function UserNouveauPage() {
                   ) : (
                     <>
                       <Save className="h-4 w-4 mr-2" />
-                      Créer l'utilisateur
+                      Créer l&apos;utilisateur
                     </>
                   )}
                 </Button>
               </div>
-            </CardContent>
-          </Card>
         </form>
       </div>
-    </div>
+    </ScrollArea>
   );
 }

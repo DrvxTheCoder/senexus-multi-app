@@ -220,10 +220,6 @@ export function UsersDataTable({ data, onView, onEdit, onDelete }: UsersDataTabl
                     {user.full_name || user.email}
                   </div>
                   <div className="text-sm text-muted-foreground">
-                    {user.position && (
-                      <span>{user.position}</span>
-                    )}
-                    {user.position && user.department && <span> • </span>}
                     {user.department && (
                       <span>{user.department}</span>
                     )}
@@ -235,12 +231,9 @@ export function UsersDataTable({ data, onView, onEdit, onDelete }: UsersDataTabl
               </TableCell>
               <TableCell className="hidden md:table-cell">
                 <div className="text-sm">{user.email}</div>
-                {user.phone && (
-                  <div className="text-xs text-muted-foreground">{user.phone}</div>
-                )}
               </TableCell>
               <TableCell>
-                <Badge variant={ROLE_COLORS[user.role as keyof typeof ROLE_COLORS] || 'outline'}>
+                <Badge variant={'outline'} className='text-[0.6rem]'>
                   {ROLE_LABELS[user.role as keyof typeof ROLE_LABELS] || user.role}
                 </Badge>
               </TableCell>

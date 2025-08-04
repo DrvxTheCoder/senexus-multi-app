@@ -21,43 +21,59 @@ export const navItems: NavItem[] = [
     shortcut: ['d', 'd'],
     items: [] // Empty array as there are no child items for Dashboard
   },
-  // {
-  //   title: 'Product',
-  //   url: '/dashboard/product',
-  //   icon: 'product',
-  //   shortcut: ['p', 'p'],
-  //   isActive: false,
-  //   items: [] // No child items
-  // },
-  // {
-  //   title: 'Account',
-  //   url: '#', // Placeholder as there is no direct link for the parent
-  //   icon: 'billing',
-  //   isActive: true,
+];
+export const navItemsAdmin: NavItem[] = [
+  {
+  title: 'Firmes',
+  url: '/dashboard/firmes',
+  icon: 'building',
+  isActive: false,
+  shortcut: ['f', 'f'],
+  items: [
+    {
+      title: 'Liste',
+      url: '/dashboard/firmes/',
+      isActive: false,
+      shortcut: ['c', 'c']
+    },
+    {
+      title: 'Nouveau',
+      url: '/dashboard/firmes/nouveau',
+      isActive: false,
+      shortcut: ['c', 'c']
+    }
+  ]
+  },
+  {
+    title: 'Utilisateurs',
+    url: '/dashboard/utilisateurs',
+    icon: 'user2',
+    isActive: false,
+    shortcut: ['u', 'u'],
+    items: [
+      {
+        title: 'Liste',
+        url: '/dashboard/utilisateurs/',
+        isActive: false,
+        shortcut: ['c', 'c']
+      },
+      {
+        title: 'Nouveau',
+        url: '/dashboard/utilisateurs/nouveau',
+        isActive: false,
+        shortcut: ['c', 'c']
+      }
+    ]
+  },
+  {
+    title: 'Modules',
+    url: '/dashboard/modules',
+    icon: 'commandIcon',
+    isActive: false,
+    shortcut: ['m', 'm'],
+    items: []
+  }
 
-  //   items: [
-  //     {
-  //       title: 'Profile',
-  //       url: '/dashboard/profile',
-  //       icon: 'userPen',
-  //       shortcut: ['m', 'm']
-  //     },
-  //     {
-  //       title: 'Login',
-  //       shortcut: ['l', 'l'],
-  //       url: '/',
-  //       icon: 'login'
-  //     }
-  //   ]
-  // },
-  // {
-  //   title: 'Kanban',
-  //   url: '/dashboard/kanban',
-  //   icon: 'kanban',
-  //   shortcut: ['k', 'k'],
-  //   isActive: false,
-  //   items: [] // No child items
-  // }
 ];
 
 export interface SaleUser {

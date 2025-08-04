@@ -16,7 +16,8 @@ import {
   X,
   UserCheck,
   UserX,
-  Building2
+  Building2,
+  Grid2X2
 } from 'lucide-react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
@@ -60,6 +61,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { UsersDataTable } from '@/components/users/users-data-table';
+import { IconFilterMinus } from '@tabler/icons-react';
 
 interface User {
   id: string;
@@ -124,7 +126,7 @@ export default function UsersPage() {
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; userId: string | null }>({
@@ -314,7 +316,7 @@ export default function UsersPage() {
         {isAdmin && (
           <Button asChild variant={'outline'}>
             <Link href="/dashboard/utilisateurs/nouveau">
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className="h-4 w-4" />
               Nouveau
             </Link>
           </Button>
@@ -334,8 +336,8 @@ export default function UsersPage() {
         </div>
         
         <Select value={roleFilter} onValueChange={setRoleFilter}>
-          <SelectTrigger className="w-full sm:w-[200px]">
-            <Filter className="h-4 w-4 mr-2" />
+          <SelectTrigger className="w-fit gap-2">
+            <Filter className="h-4 w-4" />
             <SelectValue placeholder="Rôle" />
           </SelectTrigger>
           <SelectContent>
@@ -349,7 +351,7 @@ export default function UsersPage() {
         </Select>
 
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-full sm:w-[150px]">
+          <SelectTrigger className="w-fit gap-2">
             <SelectValue placeholder="Statut" />
           </SelectTrigger>
           <SelectContent>
@@ -366,22 +368,20 @@ export default function UsersPage() {
             onClick={clearFilters}
             className="px-3"
           >
-            <X className="h-4 w-4 mr-2" />
-            Effacer
+            <IconFilterMinus className='h-4 w-4' />
           </Button>
         )}
 
         {/* View Mode Toggle */}
         <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as 'grid' | 'list')}>
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="grid" className="flex items-center gap-2">
-              <Grid3X3 className="h-4 w-4" />
-              <span className="hidden sm:inline">Grille</span>
-            </TabsTrigger>
             <TabsTrigger value="list" className="flex items-center gap-2">
               <List className="h-4 w-4" />
-              <span className="hidden sm:inline">Liste</span>
             </TabsTrigger>
+            <TabsTrigger value="grid" className="flex items-center gap-2">
+              <Grid2X2 className="h-4 w-4" />
+            </TabsTrigger>
+
           </TabsList>
         </Tabs>
       </div>
@@ -618,7 +618,7 @@ export default function UsersPage() {
               )}
             </DialogTitle>
             <DialogDescription>
-              Détails de l'utilisateur
+              Détails de l&apos;utilisateur
             </DialogDescription>
           </DialogHeader>
           
@@ -672,7 +672,7 @@ export default function UsersPage() {
               </div>
 
               <div>
-                <label className="text-sm font-medium text-muted-foreground">Date d'embauche</label>
+                <label className="text-sm font-medium text-muted-foreground">Date d&apos;embauche</label>
                 <p className="text-sm">
                   {selectedUser.hire_date 
                     ? new Date(selectedUser.hire_date).toLocaleDateString('fr-FR')
@@ -736,7 +736,7 @@ export default function UsersPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Êtes-vous sûr ?</AlertDialogTitle>
             <AlertDialogDescription>
-              Cette action va désactiver l'utilisateur. Il ne pourra plus se connecter mais ses données seront conservées.
+              Cette action va désactiver l&apos;utilisateur. Il ne pourra plus se connecter mais ses données seront conservées.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

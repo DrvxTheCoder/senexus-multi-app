@@ -23,7 +23,7 @@ interface AuthContextType {
   loading: boolean;
   signOut: () => Promise<void>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signUp: (email: string, password: string, metadata?: any) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, metadata?: any, firmIds?: string[]) => Promise<{ error: any; warning?: string }>;
   updateProfile: (updates: Partial<Profile>) => Promise<{ error: any }>;
 }
 
@@ -49,9 +49,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const lastAuthAction = useRef<'signin' | 'signout' | 'init' | null>(null);
   const profileCache = useRef(new Map<string, Profile>());
 
-  const fetchProfile = useCallback(async (userId: string): Promise<Profile | null> => {
-    // Check cache first
-    if (profileCache.current.has(userId)) {
+  const fetchProfile = useCallback(async (userId: string, force = false): Promise<Profile | null> => {
+    // Check cache first (unless force refresh)
+    if (!force && profileCache.current.has(userId)) {
       return profileCache.current.get(userId) || null;
     }
 
@@ -76,6 +76,85 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, [supabase]);
 
+  // Create profile with retry logic
+  const createProfile = useCallback(async (user: User, retries = 3): Promise<Profile | null> => {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        const profileData = {
+          id: user.id,
+          email: user.email!,
+          full_name: user.user_metadata?.full_name || 
+                     user.user_metadata?.name || 
+                     user.email?.split('@')[0] || null,
+          avatar_url: user.user_metadata?.avatar_url || null,
+          role: 'user' as const
+        };
+
+        const { data, error } = await supabase
+          .from('profiles')
+          .insert(profileData)
+          .select()
+          .single();
+
+        if (error) {
+          console.warn(`Profile creation attempt ${attempt} failed:`, error);
+          if (attempt < retries) {
+            await new Promise(resolve => setTimeout(resolve, 1000 * attempt)); // Exponential backoff
+            continue;
+          }
+          throw error;
+        }
+
+        // Update cache and return
+        profileCache.current.set(user.id, data);
+        console.log('Profile created successfully:', data.id);
+        return data;
+      } catch (error) {
+        if (attempt === retries) {
+          console.error('Profile creation failed after all retries:', error);
+          return null;
+        }
+      }
+    }
+    return null;
+  }, [supabase]);
+
+  // Assign user to firms
+  const assignUserToFirms = useCallback(async (userId: string, firmIds: string[]): Promise<void> => {
+    if (!firmIds || firmIds.length === 0) {
+      return;
+    }
+
+    // First verify profile exists
+    const profile = await fetchProfile(userId, true);
+    if (!profile) {
+      throw new Error('Cannot assign firms: profile not found');
+    }
+
+    try {
+      // Create firm assignments
+      const assignments = firmIds.map(firmId => ({
+        user_id: userId,
+        firm_id: firmId,
+        assigned_at: new Date().toISOString(),
+        is_active: true
+      }));
+
+      const { error } = await supabase
+        .from('user_firm_assignments')
+        .insert(assignments);
+
+      if (error) {
+        throw error;
+      }
+
+      console.log(`Successfully assigned user ${userId} to ${firmIds.length} firms`);
+    } catch (error) {
+      console.error('Firm assignment failed:', error);
+      throw error;
+    }
+  }, [supabase, fetchProfile]);
+
   // Initialize auth state
   useEffect(() => {
     let mounted = true;
@@ -96,8 +175,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
           setSession(initialSession);
           setUser(initialSession.user);
           
-          // Fetch profile
-          const userProfile = await fetchProfile(initialSession.user.id);
+          // Fetch profile - if it doesn't exist, create it
+          let userProfile = await fetchProfile(initialSession.user.id);
+          if (!userProfile) {
+            console.log('Profile not found, creating...');
+            userProfile = await createProfile(initialSession.user);
+          }
+          
           if (mounted) {
             setProfile(userProfile);
           }
@@ -118,7 +202,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return () => {
       mounted = false;
     };
-  }, [supabase.auth, fetchProfile]);
+  }, [supabase.auth, fetchProfile, createProfile]);
 
   // Listen for auth changes
   useEffect(() => {
@@ -133,8 +217,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setUser(session?.user || null);
 
         if (session?.user) {
-          // Fetch profile for authenticated user
-          const userProfile = await fetchProfile(session.user.id);
+          // Fetch profile for authenticated user - create if doesn't exist
+          let userProfile = await fetchProfile(session.user.id);
+          if (!userProfile) {
+            console.log('Profile not found during auth change, creating...');
+            userProfile = await createProfile(session.user);
+          }
           setProfile(userProfile);
           
           // Handle redirects based on the auth action and current path
@@ -165,7 +253,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     );
 
     return () => subscription.unsubscribe();
-  }, [initialized, supabase.auth, fetchProfile, router, pathname]);
+  }, [initialized, supabase.auth, fetchProfile, createProfile, router, pathname]);
 
   const signOut = useCallback(async () => {
     try {
@@ -194,20 +282,76 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, [supabase.auth]);
 
-  const signUp = useCallback(async (email: string, password: string, metadata?: any) => {
+  const signUp = useCallback(async (
+    email: string, 
+    password: string, 
+    metadata?: any, 
+    firmIds?: string[]
+  ): Promise<{ error: any; warning?: string }> => {
     try {
-      const { error } = await supabase.auth.signUp({
+      console.log('Starting user creation flow...');
+      
+      // Step 1: Create auth user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: metadata || {}
         }
       });
-      return { error };
+
+      if (authError) {
+        console.error('Auth creation failed:', authError);
+        return { error: authError };
+      }
+
+      if (!authData.user) {
+        return { error: new Error('User creation failed - no user returned') };
+      }
+
+      console.log('Auth user created:', authData.user.id);
+
+      // Step 2: Wait briefly for auth user to be fully committed
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Step 3: Create profile with retries
+      console.log('Creating profile...');
+      const profile = await createProfile(authData.user);
+      
+      if (!profile) {
+        return { error: new Error('Profile creation failed after retries') };
+      }
+
+      console.log('Profile created successfully:', profile.id);
+
+      // Step 4: Assign firms if provided
+      if (firmIds && firmIds.length > 0) {
+        console.log(`Assigning user to ${firmIds.length} firms...`);
+        try {
+          await assignUserToFirms(authData.user.id, firmIds);
+          console.log('Firm assignments completed successfully');
+        } catch (firmError) {
+          console.error('Firm assignment failed:', firmError);
+          // User and profile created successfully, but firm assignment failed
+          return { 
+            error: null, 
+            warning: 'User created successfully, but firm assignment failed. Please assign manually.' 
+          };
+        }
+      }
+
+      // Update local state
+      setUser(authData.user);
+      setProfile(profile);
+
+      console.log('User creation flow completed successfully');
+      return { error: null };
+
     } catch (error) {
-      return { error };
+      console.error('User creation flow failed:', error);
+      return { error: error instanceof Error ? error : new Error('Unknown error occurred') };
     }
-  }, [supabase.auth]);
+  }, [supabase.auth, createProfile, assignUserToFirms]);
 
   const updateProfile = useCallback(async (updates: Partial<Profile>) => {
     if (!user) {

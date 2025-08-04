@@ -99,82 +99,88 @@ export function OrgSwitcher({
   }, []);
 
   // Optimized fetch with caching and debouncing
-  const fetchFirms = React.useCallback(async (forceRefresh = false) => {
-    // Prevent unnecessary fetches
-    if (initialLoadCompleted && !forceRefresh) {
-      return;
-    }
+// Replace the fetchFirms function in your org switcher with this:
 
-    // Prevent concurrent fetches
-    if (isFetching.current) {
-      return;
-    }
+const fetchFirms = React.useCallback(async (forceRefresh = false) => {
+  // Prevent unnecessary fetches
+  if (initialLoadCompleted && !forceRefresh) {
+    return;
+  }
 
-    // Use cache if recent (30 seconds)
-    const now = Date.now();
-    if (!forceRefresh && firmsCache.current.length > 0 && (now - lastFetch.current) < 30000) {
-      setFirms(firmsCache.current);
-      setLoading(false);
-      return;
-    }
+  // Prevent concurrent fetches
+  if (isFetching.current) {
+    return;
+  }
 
-    try {
-      isFetching.current = true;
-      setLoading(true);
-      const supabase = createClient();
+  // Use cache if recent (30 seconds)
+  const now = Date.now();
+  if (!forceRefresh && firmsCache.current.length > 0 && (now - lastFetch.current) < 30000) {
+    setFirms(firmsCache.current);
+    setLoading(false);
+    return;
+  }
 
-      const { data, error } = await supabase
-        .from('firms')
-        .select('id, name, logo, theme_color')
-        .eq('is_active', true)
-        .order('name');
+  try {
+    isFetching.current = true;
+    setLoading(true);
+    const supabase = createClient();
 
-      if (error) {
-        console.error('Error fetching firms:', error);
-        return;
-      }
+    // This query will now respect RLS and only return firms the user can access
+    const { data, error } = await supabase
+      .from('firms')
+      .select('id, name, logo, theme_color')
+      .eq('is_active', true)
+      .order('name');
 
-      const firmsData = data || [];
-      
-      // Update cache
-      firmsCache.current = firmsData;
-      lastFetch.current = now;
-      setFirms(firmsData);
-
-      // Set selected firm based on cookie or default to first firm
-      if (cookiesLoaded && firmsData.length > 0) {
-        const savedFirmId = getCookie(SELECTED_FIRM_COOKIE);
-        let firmToSelect: Firm | null = null;
-
-        if (savedFirmId) {
-          firmToSelect = firmsData.find((firm) => firm.id === savedFirmId) || null;
-        }
-
-        if (!firmToSelect) {
-          firmToSelect = firmsData[0];
-        }
-
-        if (firmToSelect && (!selectedTenant || selectedTenant.id !== firmToSelect.id)) {
-          setSelectedTenant(firmToSelect);
-          setActiveTheme(getThemeFromColor(firmToSelect.theme_color));
-          setCookie(SELECTED_FIRM_COOKIE, firmToSelect.id);
-
-          if (onTenantSwitch) {
-            onTenantSwitch(firmToSelect.id);
-          }
-        }
-      }
-
-      if (!initialLoadCompleted) {
-        setInitialLoadCompleted(true);
-      }
-    } catch (error) {
+    if (error) {
       console.error('Error fetching firms:', error);
-    } finally {
-      setLoading(false);
-      isFetching.current = false;
+      return;
     }
-  }, [cookiesLoaded, selectedTenant, setActiveTheme, onTenantSwitch, initialLoadCompleted]);
+
+    const firmsData = data || [];
+    
+    // Debug: Log how many firms the user can see
+    console.log(`User can access ${firmsData.length} firms:`, firmsData.map(f => f.name));
+    
+    // Update cache
+    firmsCache.current = firmsData;
+    lastFetch.current = now;
+    setFirms(firmsData);
+
+    // Set selected firm based on cookie or default to first firm
+    if (cookiesLoaded && firmsData.length > 0) {
+      const savedFirmId = getCookie(SELECTED_FIRM_COOKIE);
+      let firmToSelect: Firm | null = null;
+
+      if (savedFirmId) {
+        firmToSelect = firmsData.find((firm) => firm.id === savedFirmId) || null;
+      }
+
+      if (!firmToSelect) {
+        firmToSelect = firmsData[0];
+      }
+
+      if (firmToSelect && (!selectedTenant || selectedTenant.id !== firmToSelect.id)) {
+        setSelectedTenant(firmToSelect);
+        setActiveTheme(getThemeFromColor(firmToSelect.theme_color));
+        setCookie(SELECTED_FIRM_COOKIE, firmToSelect.id);
+
+        if (onTenantSwitch) {
+          onTenantSwitch(firmToSelect.id);
+        }
+      }
+    }
+
+    if (!initialLoadCompleted) {
+      setInitialLoadCompleted(true);
+    }
+  } catch (error) {
+    console.error('Error fetching firms:', error);
+  } finally {
+    setLoading(false);
+    isFetching.current = false;
+  }
+}, [cookiesLoaded, selectedTenant, setActiveTheme, onTenantSwitch, initialLoadCompleted]);
 
   // Load firms when cookies are loaded - only run once initially
   React.useEffect(() => {
@@ -199,6 +205,14 @@ export function OrgSwitcher({
     lastFetch.current = 0;
     fetchFirms(true);
   }, [fetchFirms]);
+
+  // Check current user in browser console
+const supabase = createClient();
+supabase.auth.getUser().then(({ data: { user } }) => {
+  console.log('Current user ID:', user?.id);
+  console.log('Expected manager ID: 844c7829-fd63-47a4-b62d-f39a1ba1dad2');
+  console.log('Is this the manager?', user?.id === '844c7829-fd63-47a4-b62d-f39a1ba1dad2');
+});
 
   // Rest of your component remains the same but with performance optimizations...
   // Show loading state

@@ -342,7 +342,7 @@ export default function UserEditPage() {
           </Link>
         </Button>
         <div className="min-w-0 flex-1">
-          <h1 className="text-2xl sm:text-3xl font-bold">Modifier l'utilisateur</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold">Modifier l&apos;utilisateur</h1>
           <p className="text-muted-foreground text-sm sm:text-base truncate">
             Modifiez les informations de {user.full_name || user.email}
           </p>
@@ -361,7 +361,7 @@ export default function UserEditPage() {
               Informations personnelles
             </CardTitle>
             <CardDescription>
-              Modifiez les informations de base de l'utilisateur
+              Modifiez les informations de base de l&apos;utilisateur
             </CardDescription>
           </CardHeader>
 
@@ -377,7 +377,7 @@ export default function UserEditPage() {
                   className="bg-muted"
                 />
                 <p className="text-xs text-muted-foreground">
-                  L'email ne peut pas être modifié
+                  L&apos;email ne peut pas être modifié
                 </p>
               </div>
 
@@ -407,7 +407,7 @@ export default function UserEditPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="hire_date">Date d'embauche</Label>
+                <Label htmlFor="hire_date">Date d&apos;embauche</Label>
                 <Input
                   id="hire_date"
                   type="date"
@@ -425,7 +425,7 @@ export default function UserEditPage() {
           <CardHeader>
             <CardTitle>Informations professionnelles</CardTitle>
             <CardDescription>
-              Modifiez le rôle et les responsabilités de l'utilisateur
+              Modifiez le rôle et les responsabilités de l&apos;utilisateur
             </CardDescription>
           </CardHeader>
 
