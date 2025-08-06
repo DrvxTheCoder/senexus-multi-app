@@ -31,13 +31,13 @@ export const navItemsAdmin: NavItem[] = [
   shortcut: ['f', 'f'],
   items: [
     {
-      title: 'Liste',
+      title: 'Toutes les firmes',
       url: '/dashboard/firmes/',
       isActive: false,
       shortcut: ['c', 'c']
     },
     {
-      title: 'Nouveau',
+      title: 'Créer une firme',
       url: '/dashboard/firmes/nouveau',
       isActive: false,
       shortcut: ['c', 'c']

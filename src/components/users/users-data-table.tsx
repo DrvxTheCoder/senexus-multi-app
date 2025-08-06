@@ -31,6 +31,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
+import { IconCancel, IconCircleCheckFilled } from '@tabler/icons-react';
 
 interface User {
   id: string;
@@ -142,7 +143,7 @@ export function UsersDataTable({ data, onView, onEdit, onDelete }: UsersDataTabl
     <Button
       variant="ghost"
       onClick={() => handleSort(field)}
-      className="h-auto p-0 font-medium hover:bg-transparent"
+      className="h-auto font-medium hover:bg-transparent w-fit p-1 px-2"
     >
       <span className="flex items-center gap-2">
         {children}
@@ -195,9 +196,9 @@ export function UsersDataTable({ data, onView, onEdit, onDelete }: UsersDataTabl
               <SortButton field="role">Rôle</SortButton>
             </TableHead>
             <TableHead className="hidden lg:table-cell">Firmes</TableHead>
-            <TableHead className="hidden lg:table-cell">
+            {/* <TableHead className="hidden lg:table-cell">
               <SortButton field="last_login_at">Dernière connexion</SortButton>
-            </TableHead>
+            </TableHead> */}
             <TableHead className="hidden xl:table-cell">
               <SortButton field="created_at">Créé le</SortButton>
             </TableHead>
@@ -219,7 +220,7 @@ export function UsersDataTable({ data, onView, onEdit, onDelete }: UsersDataTabl
                   <div className="font-medium">
                     {user.full_name || user.email}
                   </div>
-                  <div className="text-sm text-muted-foreground">
+                  <div className="text-xs text-muted-foreground">
                     {user.department && (
                       <span>{user.department}</span>
                     )}
@@ -241,7 +242,7 @@ export function UsersDataTable({ data, onView, onEdit, onDelete }: UsersDataTabl
                 <div className="flex items-center gap-1 max-w-[200px]">
                   {user.assigned_firms && user.assigned_firms.length > 0 ? (
                     <>
-                      {user.assigned_firms.slice(0, 2).map((firm, index) => (
+                      {user.assigned_firms.slice(0, 4).map((firm, index) => (
                         <div
                           key={firm.id}
                           className="flex items-center gap-1 px-2 py-1 bg-muted rounded text-xs"
@@ -256,12 +257,12 @@ export function UsersDataTable({ data, onView, onEdit, onDelete }: UsersDataTabl
                           ) : (
                             <Building2 className="w-3 h-3" />
                           )}
-                          <span className="truncate max-w-[50px]">{firm.name}</span>
+                          
                         </div>
                       ))}
-                      {user.assigned_firms.length > 2 && (
+                      {user.assigned_firms.length > 4 && (
                         <span className="text-xs text-muted-foreground">
-                          +{user.assigned_firms.length - 2}
+                          +{user.assigned_firms.length - 4}
                         </span>
                       )}
                     </>
@@ -270,7 +271,7 @@ export function UsersDataTable({ data, onView, onEdit, onDelete }: UsersDataTabl
                   )}
                 </div>
               </TableCell>
-              <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
+              {/* <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
                 {user.last_login_at ? (
                   <div>
                     <div>{new Date(user.last_login_at).toLocaleDateString('fr-FR')}</div>
@@ -279,15 +280,21 @@ export function UsersDataTable({ data, onView, onEdit, onDelete }: UsersDataTabl
                 ) : (
                   'Jamais'
                 )}
-              </TableCell>
+              </TableCell> */}
               <TableCell className="hidden xl:table-cell text-sm text-muted-foreground">
                 {new Date(user.created_at).toLocaleDateString('fr-FR')}
               </TableCell>
               <TableCell>
                 {user.is_active ? (
-                  <UserCheck className="h-4 w-4 text-green-600" />
+                  <Badge variant={'outline'} className="flex items-center gap-1 text-xs">
+                    <IconCircleCheckFilled className="h-2 w-2 text-green-600" />
+                    <small className="text-xs text-green-600">Actif</small>
+                  </Badge>
                 ) : (
-                  <UserX className="h-4 w-4 text-red-600" />
+                  <Badge variant={'outline'} className="flex items-center gap-1 text-xs">
+                    <IconCancel className="h-2 w-2 text-red-600" />
+                    <span className="text-xs text-red-600">Inactif</span>
+                  </Badge>
                 )}
               </TableCell>
               <TableCell>

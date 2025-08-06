@@ -61,7 +61,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { UsersDataTable } from '@/components/users/users-data-table';
-import { IconFilterMinus } from '@tabler/icons-react';
+import { IconAdjustmentsHorizontal, IconCancel, IconCircleCheckFilled, IconFilterMinus } from '@tabler/icons-react';
 
 interface User {
   id: string;
@@ -103,7 +103,7 @@ const ROLE_LABELS = {
 };
 
 const ROLE_COLORS = {
-  admin: 'destructive',
+  admin: 'default',
   owner: 'default',
   audit: 'secondary',
   manager: 'outline',
@@ -303,7 +303,7 @@ export default function UsersPage() {
   }
 
   return (
-    <div className="container max-w-7xl mx-auto py-8">
+    <div className="container max-w-7xl mx-auto py-8 px-8">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
@@ -426,36 +426,38 @@ export default function UsersPage() {
                 {paginatedUsers.map((user) => (
                   <Card key={user.id} className="group hover:shadow-lg transition-all">
                     <CardHeader className="pb-3">
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-3 min-w-0 flex-1">
-                          <Avatar className="h-10 w-10">
+                      <div className="flex flex-col justify-center items-center">
+                          <Avatar className="h-20 w-20">
                             <AvatarImage src={user.avatar_url || undefined} />
-                            <AvatarFallback>{getUserInitials(user)}</AvatarFallback>
+                            <AvatarFallback className='font-bold text-lg'>{getUserInitials(user)}</AvatarFallback>
                           </Avatar>
-                          <div className="min-w-0 flex-1">
+                        <div className="flex items-center min-w-0 flex-1 mb-8">
+                          <div className="min-w-0 flex flex-col items-center">
                             <CardTitle className="text-lg truncate">
                               {user.full_name || user.email}
                             </CardTitle>
-                            <div className="flex items-center gap-2 mt-1">
+                            <div className="flex flex-col items-center gap-2">
+                              <p className="text-xs text-muted-foreground truncate">
+                                {user.email}
+                              </p>
                               <Badge 
                                 variant={ROLE_COLORS[user.role as keyof typeof ROLE_COLORS] || 'outline'} 
                                 className="text-xs"
                               >
-                                {ROLE_LABELS[user.role as keyof typeof ROLE_LABELS] || user.role}
+                                <small>
+                                  {ROLE_LABELS[user.role as keyof typeof ROLE_LABELS] || user.role}
+                                </small>
+                                
                               </Badge>
-                              {user.is_active ? (
-                                <UserCheck className="h-3 w-3 text-green-600" />
-                              ) : (
-                                <UserX className="h-3 w-3 text-red-600" />
-                              )}
                             </div>
+
                           </div>
                         </div>
                         
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100">
-                              <MoreHorizontal className="h-4 w-4" />
+                            <Button variant="outline" className="w-full cursor-pointer">
+                              <IconAdjustmentsHorizontal className='mr-2 h-4 w-4' /> Plus d&apos;options
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
@@ -474,7 +476,7 @@ export default function UsersPage() {
                                   className="text-destructive"
                                   onClick={() => setDeleteDialog({ open: true, userId: user.id })}
                                 >
-                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  <Trash2 className="h-4 w-4 mr-2 text-destructive" />
                                   Désactiver
                                 </DropdownMenuItem>
                               </>
@@ -482,31 +484,12 @@ export default function UsersPage() {
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </div>
-                    </CardHeader>
-                    
-                    <CardContent>
-                      <div className="space-y-2">
-                        <p className="text-sm text-muted-foreground truncate">
-                          {user.email}
-                        </p>
-                        {user.position && (
-                          <p className="text-sm font-medium truncate">
-                            {user.position}
-                          </p>
-                        )}
-                        {user.department && (
-                          <p className="text-xs text-muted-foreground truncate">
-                            {user.department}
-                          </p>
-                        )}
-                      </div>
-                      
-                      {/* Assigned Firms */}
-                      <div className="mt-3">
+                                            {/* Assigned Firms */}
+                      <div>
                         <p className="text-xs text-muted-foreground mb-2">Firmes assignées:</p>
                         <div className="flex flex-wrap gap-1">
                           {user.assigned_firms && user.assigned_firms.length > 0 ? (
-                            user.assigned_firms.slice(0, 3).map((firm) => (
+                            user.assigned_firms.slice(0, 6).map((firm) => (
                               <div
                                 key={firm.id}
                                 className="flex items-center gap-1 px-2 py-1 bg-muted rounded text-xs"
@@ -520,15 +503,14 @@ export default function UsersPage() {
                                 ) : (
                                   <Building2 className="w-3 h-3" />
                                 )}
-                                <span className="truncate max-w-[60px]">{firm.name}</span>
                               </div>
                             ))
                           ) : (
                             <span className="text-xs text-muted-foreground">Aucune</span>
                           )}
-                          {user.assigned_firms && user.assigned_firms.length > 3 && (
+                          {user.assigned_firms && user.assigned_firms.length > 4 && (
                             <span className="text-xs text-muted-foreground">
-                              +{user.assigned_firms.length - 3} autres
+                              +{user.assigned_firms.length - 4} autres
                             </span>
                           )}
                         </div>
@@ -546,7 +528,7 @@ export default function UsersPage() {
                           )}
                         </div>
                       </div>
-                    </CardContent>
+                    </CardHeader>
                   </Card>
                 ))}
               </div>
@@ -627,12 +609,12 @@ export default function UsersPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Email</label>
-                  <p className="text-sm">{selectedUser.email}</p>
+                  <p className="text-xs">{selectedUser.email}</p>
                 </div>
-                <div>
+                <div className='flex flex-col'>
                   <label className="text-sm font-medium text-muted-foreground">Rôle</label>
-                  <Badge variant={ROLE_COLORS[selectedUser.role as keyof typeof ROLE_COLORS] || 'outline'}>
-                    {ROLE_LABELS[selectedUser.role as keyof typeof ROLE_LABELS] || selectedUser.role}
+                  <Badge variant={ROLE_COLORS[selectedUser.role as keyof typeof ROLE_COLORS] || 'outline'} className='text-xs'>
+                    <small>{ROLE_LABELS[selectedUser.role as keyof typeof ROLE_LABELS] || selectedUser.role}</small>
                   </Badge>
                 </div>
               </div>
@@ -640,21 +622,21 @@ export default function UsersPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Téléphone</label>
-                  <p className="text-sm">{selectedUser.phone || 'Non renseigné'}</p>
+                  <p className="text-xs">{selectedUser.phone || 'Non renseigné'}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Statut</label>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 ">
                     {selectedUser.is_active ? (
-                      <>
-                        <UserCheck className="h-4 w-4 text-green-600" />
-                        <span className="text-sm text-green-600">Actif</span>
-                      </>
+                      <Badge variant={'outline'} className="flex items-center gap-1 text-xs">
+                        <IconCircleCheckFilled className="h-2 w-2 text-green-600" />
+                        <small className="text-xs text-green-600">Actif</small>
+                      </Badge>
                     ) : (
-                      <>
-                        <UserX className="h-4 w-4 text-red-600" />
-                        <span className="text-sm text-red-600">Inactif</span>
-                      </>
+                      <Badge variant={'outline'} className="flex items-center gap-1 text-xs">
+                        <IconCancel className="h-2 w-2 text-red-600" />
+                        <span className="text-xs text-red-600">Inactif</span>
+                      </Badge>
                     )}
                   </div>
                 </div>
@@ -663,17 +645,17 @@ export default function UsersPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Poste</label>
-                  <p className="text-sm">{selectedUser.position || 'Non renseigné'}</p>
+                  <p className="text-xs">{selectedUser.position || 'Non renseigné'}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Département</label>
-                  <p className="text-sm">{selectedUser.department || 'Non renseigné'}</p>
+                  <p className="text-xs">{selectedUser.department || 'Non renseigné'}</p>
                 </div>
               </div>
 
               <div>
                 <label className="text-sm font-medium text-muted-foreground">Date d&apos;embauche</label>
-                <p className="text-sm">
+                <p className="text-xs">
                   {selectedUser.hire_date 
                     ? new Date(selectedUser.hire_date).toLocaleDateString('fr-FR')
                     : 'Non renseignée'
@@ -695,10 +677,10 @@ export default function UsersPage() {
                             <img 
                               src={firm.logo} 
                               alt={firm.name}
-                              className="w-6 h-6 rounded object-contain"
+                              className="w-4 h-4 rounded object-contain"
                             />
                           ) : (
-                            <Building2 className="w-6 h-6 text-muted-foreground" />
+                            <Building2 className="w-4 h-4 text-muted-foreground" />
                           )}
                           <span className="text-sm font-medium">{firm.name}</span>
                         </div>
@@ -743,7 +725,7 @@ export default function UsersPage() {
             <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction 
               onClick={() => deleteDialog.userId && handleDelete(deleteDialog.userId)}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-destructive hover:bg-destructive/90"
             >
               Désactiver
             </AlertDialogAction>
