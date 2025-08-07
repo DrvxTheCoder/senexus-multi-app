@@ -17,17 +17,35 @@ RUN \
   else echo "Lockfile not found." && exit 1; \
   fi
 
-
 # Rebuild the source code only when needed
 FROM base AS builder
 WORKDIR /app
+
+# IMPORTANT: Accept build arguments for environment variables
+ARG NEXT_PUBLIC_SUPABASE_URL
+ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
+ARG NEXT_SENTRY_AUTH_TOKEN
+ARG NEXT_PUBLIC_SENTRY_DISABLED
+ARG NEXT_PUBLIC_SENTRY_DSN
+ARG NEXT_PUBLIC_SENTRY_ORG
+ARG NEXT_PUBLIC_SENTRY_PROJECT
+
+# Set environment variables for build time
+ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
+ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
+ENV SENTRY_AUTH_TOKEN=$NEXT_SENTRY_AUTH_TOKEN
+ENV NEXT_PUBLIC_SENTRY_DISABLED=$NEXT_PUBLIC_SENTRY_DISABLED
+ENV NEXT_PUBLIC_SENTRY_DSN=$NEXT_PUBLIC_SENTRY_DSN
+ENV NEXT_PUBLIC_SENTRY_ORG=$NEXT_PUBLIC_SENTRY_ORG
+ENV NEXT_PUBLIC_SENTRY_PROJECT=$NEXT_PUBLIC_SENTRY_PROJECT
+
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # Next.js collects completely anonymous telemetry data about general usage.
 # Learn more here: https://nextjs.org/telemetry
 # Uncomment the following line in case you want to disable telemetry during the build.
-# ENV NEXT_TELEMETRY_DISABLED=1
+ENV NEXT_TELEMETRY_DISABLED=1
 
 RUN \
   if [ -f yarn.lock ]; then yarn run build; \
@@ -42,7 +60,7 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 # Uncomment the following line in case you want to disable telemetry during runtime.
-# ENV NEXT_TELEMETRY_DISABLED=1
+ENV NEXT_TELEMETRY_DISABLED=1
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
