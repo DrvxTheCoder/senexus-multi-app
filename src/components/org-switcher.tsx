@@ -17,10 +17,15 @@ import {
   useSidebar
 } from '@/components/ui/sidebar';
 import { useThemeConfig } from '@/components/active-theme';
-import { NewFirmDialog } from '@/components/new-firm-dialog';
 import { TextShimmer } from 'components/motion-primitives/text-shimmer';
 import { SpinnerCircular } from 'spinners-react';
 import Link from 'next/link';
+import {
+  getUserSession,
+  isUserAdmin,
+  getUserAssignedFirmIds
+} from '@/lib/auth/session-cookies';
+import { useAuth } from '@/lib/auth/auth-provider';
 
 interface Firm {
   id: string;
@@ -82,6 +87,7 @@ export function OrgSwitcher({
 }: OrgSwitcherProps) {
   const { activeTheme, setActiveTheme } = useThemeConfig();
   const { state } = useSidebar();
+  const { userSession, user, refreshUserSession } = useAuth();
   const [firms, setFirms] = React.useState<Firm[]>([]);
   const [selectedTenant, setSelectedTenant] = React.useState<Firm | null>(null);
   const [loading, setLoading] = React.useState(true);
@@ -98,106 +104,198 @@ export function OrgSwitcher({
     setCookiesLoaded(true);
   }, []);
 
-  // Optimized fetch with caching and debouncing
-// Replace the fetchFirms function in your org switcher with this:
-
-const fetchFirms = React.useCallback(async (forceRefresh = false) => {
-  // Prevent unnecessary fetches
-  if (initialLoadCompleted && !forceRefresh) {
-    return;
-  }
-
-  // Prevent concurrent fetches
-  if (isFetching.current) {
-    return;
-  }
-
-  // Use cache if recent (30 seconds)
-  const now = Date.now();
-  if (!forceRefresh && firmsCache.current.length > 0 && (now - lastFetch.current) < 30000) {
-    setFirms(firmsCache.current);
-    setLoading(false);
-    return;
-  }
-
-  try {
-    isFetching.current = true;
-    setLoading(true);
-    const supabase = createClient();
-
-    // This query will now respect RLS and only return firms the user can access
-    const { data, error } = await supabase
-      .from('firms')
-      .select('id, name, logo, theme_color')
-      .eq('is_active', true)
-      .order('name');
-
-    if (error) {
-      console.error('Error fetching firms:', error);
-      return;
-    }
-
-    const firmsData = data || [];
-    
-    // Debug: Log how many firms the user can see
-    console.log(`User can access ${firmsData.length} firms:`, firmsData.map(f => f.name));
-    
-    // Update cache
-    firmsCache.current = firmsData;
-    lastFetch.current = now;
-    setFirms(firmsData);
-
-    // Set selected firm based on cookie or default to first firm
-    if (cookiesLoaded && firmsData.length > 0) {
-      const savedFirmId = getCookie(SELECTED_FIRM_COOKIE);
-      let firmToSelect: Firm | null = null;
-
-      if (savedFirmId) {
-        firmToSelect = firmsData.find((firm) => firm.id === savedFirmId) || null;
+  // Optimized fetch with user session filtering
+  const fetchFirms = React.useCallback(
+    async (forceRefresh = false) => {
+      // Prevent unnecessary fetches
+      if (initialLoadCompleted && !forceRefresh) {
+        return;
       }
 
-      if (!firmToSelect) {
-        firmToSelect = firmsData[0];
+      // Prevent concurrent fetches
+      if (isFetching.current) {
+        return;
       }
 
-      if (firmToSelect && (!selectedTenant || selectedTenant.id !== firmToSelect.id)) {
-        setSelectedTenant(firmToSelect);
-        setActiveTheme(getThemeFromColor(firmToSelect.theme_color));
-        setCookie(SELECTED_FIRM_COOKIE, firmToSelect.id);
+      // Use cache if recent (30 seconds)
+      const now = Date.now();
+      if (
+        !forceRefresh &&
+        firmsCache.current.length > 0 &&
+        now - lastFetch.current < 30000
+      ) {
+        setFirms(firmsCache.current);
+        setLoading(false);
+        return;
+      }
 
-        if (onTenantSwitch) {
-          onTenantSwitch(firmToSelect.id);
+      try {
+        isFetching.current = true;
+        setLoading(true);
+        const supabase = createClient();
+
+        // Get user session data from cookie or auth context
+        const sessionData = userSession || getUserSession();
+
+        if (!sessionData && user?.id) {
+          // If no session data but user exists, refresh it
+          console.log('No session data found, refreshing...');
+          await refreshUserSession();
+          return; // This will trigger a re-render with updated session data
         }
+
+        let firmsData: Firm[] = [];
+
+        if (sessionData && sessionData.assignedFirmIds.length > 0) {
+          // User has session data - fetch only assigned firms
+          console.log(
+            `Fetching ${sessionData.assignedFirmIds.length} assigned firms for user`
+          );
+
+          const { data, error } = await supabase
+            .from('firms')
+            .select('id, name, logo, theme_color')
+            .in('id', sessionData.assignedFirmIds)
+            .eq('is_active', true)
+            .order('name');
+
+          if (error) {
+            console.error('Error fetching assigned firms:', error);
+            return;
+          }
+
+          firmsData = data || [];
+          console.log(
+            `Successfully fetched ${firmsData.length} assigned firms:`,
+            firmsData.map((f) => f.name)
+          );
+        } else if (isUserAdmin()) {
+          // Admin users can see all firms
+          console.log('Admin user - fetching all firms');
+
+          const { data, error } = await supabase
+            .from('firms')
+            .select('id, name, logo, theme_color')
+            .eq('is_active', true)
+            .order('name');
+
+          if (error) {
+            console.error('Error fetching all firms for admin:', error);
+            return;
+          }
+
+          firmsData = data || [];
+          console.log(`Admin can access ${firmsData.length} firms`);
+        } else {
+          // No session data and not admin - might be a new user or session expired
+          console.log(
+            'No session data available and not admin - no firms to display'
+          );
+          firmsData = [];
+        }
+
+        // Update cache
+        firmsCache.current = firmsData;
+        lastFetch.current = now;
+        setFirms(firmsData);
+
+        // Set selected firm based on cookie or default to first firm
+        if (cookiesLoaded && firmsData.length > 0) {
+          const savedFirmId = getCookie(SELECTED_FIRM_COOKIE);
+          let firmToSelect: Firm | null = null;
+
+          if (savedFirmId) {
+            firmToSelect =
+              firmsData.find((firm) => firm.id === savedFirmId) || null;
+          }
+
+          if (!firmToSelect) {
+            // If no saved firm or saved firm not accessible, default to primary firm or first firm
+            if (sessionData?.primaryFirmId) {
+              firmToSelect =
+                firmsData.find((f) => f.id === sessionData.primaryFirmId) ||
+                firmsData[0];
+            } else {
+              firmToSelect = firmsData[0];
+            }
+          }
+
+          if (
+            firmToSelect &&
+            (!selectedTenant || selectedTenant.id !== firmToSelect.id)
+          ) {
+            setSelectedTenant(firmToSelect);
+            setActiveTheme(getThemeFromColor(firmToSelect.theme_color));
+            setCookie(SELECTED_FIRM_COOKIE, firmToSelect.id);
+
+            if (onTenantSwitch) {
+              onTenantSwitch(firmToSelect.id);
+            }
+          }
+        }
+
+        if (!initialLoadCompleted) {
+          setInitialLoadCompleted(true);
+        }
+      } catch (error) {
+        console.error('Error fetching firms:', error);
+      } finally {
+        setLoading(false);
+        isFetching.current = false;
       }
-    }
+    },
+    [
+      cookiesLoaded,
+      selectedTenant,
+      setActiveTheme,
+      onTenantSwitch,
+      initialLoadCompleted,
+      userSession,
+      user?.id,
+      refreshUserSession
+    ]
+  );
 
-    if (!initialLoadCompleted) {
-      setInitialLoadCompleted(true);
-    }
-  } catch (error) {
-    console.error('Error fetching firms:', error);
-  } finally {
-    setLoading(false);
-    isFetching.current = false;
-  }
-}, [cookiesLoaded, selectedTenant, setActiveTheme, onTenantSwitch, initialLoadCompleted]);
-
-  // Load firms when cookies are loaded - only run once initially
+  // Load firms when cookies are loaded or user session changes
   React.useEffect(() => {
     if (cookiesLoaded && !initialLoadCompleted && !isFetching.current) {
       fetchFirms();
     }
   }, [cookiesLoaded, initialLoadCompleted, fetchFirms]);
 
-  const handleTenantSwitch = React.useCallback((firm: Firm) => {
-    setSelectedTenant(firm);
-    setActiveTheme(getThemeFromColor(firm.theme_color));
-    setCookie(SELECTED_FIRM_COOKIE, firm.id);
-
-    if (onTenantSwitch) {
-      onTenantSwitch(firm.id);
+  // Refetch when user session changes
+  React.useEffect(() => {
+    if (initialLoadCompleted && userSession && !isFetching.current) {
+      console.log('User session updated, refreshing firms...');
+      firmsCache.current = []; // Clear cache
+      lastFetch.current = 0;
+      fetchFirms(true);
     }
-  }, [setActiveTheme, onTenantSwitch]);
+  }, [userSession, fetchFirms, initialLoadCompleted]);
+
+  const handleTenantSwitch = React.useCallback(
+    (firm: Firm) => {
+      // Check if user has access to this firm
+      const sessionData = userSession || getUserSession();
+      if (
+        sessionData &&
+        !sessionData.assignedFirmIds.includes(firm.id) &&
+        !isUserAdmin()
+      ) {
+        console.warn('User attempted to switch to unauthorized firm:', firm.id);
+        return;
+      }
+
+      setSelectedTenant(firm);
+      setActiveTheme(getThemeFromColor(firm.theme_color));
+      setCookie(SELECTED_FIRM_COOKIE, firm.id);
+
+      if (onTenantSwitch) {
+        onTenantSwitch(firm.id);
+      }
+    },
+    [setActiveTheme, onTenantSwitch, userSession]
+  );
 
   const handleFirmCreated = React.useCallback(() => {
     // Clear cache and force refresh
@@ -206,15 +304,6 @@ const fetchFirms = React.useCallback(async (forceRefresh = false) => {
     fetchFirms(true);
   }, [fetchFirms]);
 
-  // Check current user in browser console
-const supabase = createClient();
-supabase.auth.getUser().then(({ data: { user } }) => {
-  console.log('Current user ID:', user?.id);
-  console.log('Expected manager ID: 844c7829-fd63-47a4-b62d-f39a1ba1dad2');
-  console.log('Is this the manager?', user?.id === '844c7829-fd63-47a4-b62d-f39a1ba1dad2');
-});
-
-  // Rest of your component remains the same but with performance optimizations...
   // Show loading state
   if (loading || !cookiesLoaded) {
     return (
@@ -246,6 +335,9 @@ supabase.auth.getUser().then(({ data: { user } }) => {
 
   // Show empty state if no firms
   if (firms.length === 0) {
+    const sessionData = userSession || getUserSession();
+    const isAdmin = isUserAdmin();
+
     return (
       <SidebarMenu>
         <SidebarMenuItem>
@@ -261,7 +353,9 @@ supabase.auth.getUser().then(({ data: { user } }) => {
                 {state !== 'collapsed' && (
                   <>
                     <div className='flex flex-col gap-0.5 leading-none'>
-                      <span className='font-mono'>Aucune firme</span>
+                      <span className='font-mono text-xs'>
+                        {sessionData ? 'Aucune firme assignée' : 'Aucune firme'}
+                      </span>
                     </div>
                     <ChevronsUpDown className='ml-auto' />
                   </>
@@ -272,16 +366,25 @@ supabase.auth.getUser().then(({ data: { user } }) => {
               className='w-[--radix-dropdown-menu-trigger-width]'
               align='start'
             >
-              <Link href='/dashboard/firmes/nouveau'>
-                <DropdownMenuItem>
-                  <div className='flex items-center justify-center rounded-md border bg-transparent p-1'>
-                    <Plus className='size-3' />
-                  </div>
-                  <div className='text-muted-foreground text-xs font-medium'>
-                    Nouveau
+              {isAdmin && (
+                <Link href='/dashboard/firmes/nouveau'>
+                  <DropdownMenuItem>
+                    <div className='flex items-center justify-center rounded-md border bg-transparent p-1'>
+                      <Plus className='size-3' />
+                    </div>
+                    <div className='text-muted-foreground text-xs font-medium'>
+                      Nouveau
+                    </div>
+                  </DropdownMenuItem>
+                </Link>
+              )}
+              {!sessionData && (
+                <DropdownMenuItem disabled>
+                  <div className='text-muted-foreground text-xs'>
+                    Session expirée - reconnectez-vous
                   </div>
                 </DropdownMenuItem>
-              </Link>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </SidebarMenuItem>
@@ -294,6 +397,7 @@ supabase.auth.getUser().then(({ data: { user } }) => {
   }
 
   const isCollapsed = state === 'collapsed';
+  const isAdmin = isUserAdmin();
 
   return (
     <SidebarMenu>
@@ -358,7 +462,8 @@ supabase.auth.getUser().then(({ data: { user } }) => {
                           e.currentTarget.style.display = 'none';
                           const parent = e.currentTarget.parentElement;
                           if (parent) {
-                            const fallback = parent.querySelector('.fallback-icon');
+                            const fallback =
+                              parent.querySelector('.fallback-icon');
                             if (fallback) {
                               (fallback as HTMLElement).style.display = 'block';
                             }
@@ -378,17 +483,22 @@ supabase.auth.getUser().then(({ data: { user } }) => {
                 </div>
               </DropdownMenuItem>
             ))}
-            <DropdownMenuSeparator />
-              <Link href='/dashboard/firmes/nouveau'>
-                <DropdownMenuItem>
-                  <div className='flex items-center justify-center rounded-md border bg-transparent p-1'>
-                    <Plus className='size-3' />
-                  </div>
-                  <div className='text-muted-foreground text-xs font-medium'>
-                    Nouveau
-                  </div>
-                </DropdownMenuItem>
-              </Link>
+
+            {isAdmin && (
+              <>
+                <DropdownMenuSeparator />
+                <Link href='/dashboard/firmes/nouveau'>
+                  <DropdownMenuItem>
+                    <div className='flex items-center justify-center rounded-md border bg-transparent p-1'>
+                      <Plus className='size-3' />
+                    </div>
+                    <div className='text-muted-foreground text-xs font-medium'>
+                      Nouveau
+                    </div>
+                  </DropdownMenuItem>
+                </Link>
+              </>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>
