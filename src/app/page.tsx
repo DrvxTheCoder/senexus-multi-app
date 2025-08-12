@@ -9,6 +9,6 @@ export default async function Page() {
   if (!user || error) {
     return redirect('/auth/sign-in');
   } else {
-    redirect('/dashboard/overview');
+    redirect('/senexus/dashboard/overview');
   }
 }
