@@ -11,55 +11,56 @@ export type Product = {
   updated_at: string;
 };
 
-//Info: The following data is used for the sidebar navigation and Cmd K bar.
-export const navItems: NavItem[] = [
+// Helper to prefix URLs with firmSlug
+export const getNavItems = (firmSlug: string): NavItem[] => [
   {
     title: 'Dashboard',
-    url: '/dashboard/overview',
+    url: `/${firmSlug}/dashboard/overview`,
     icon: 'dashboard',
     isActive: false,
     shortcut: ['d', 'd'],
-    items: [] // Empty array as there are no child items for Dashboard
+    items: []
   },
 ];
-export const navItemsAdmin: NavItem[] = [
+
+export const getNavItemsAdmin = (firmSlug: string): NavItem[] => [
   {
-  title: 'Firmes',
-  url: '/dashboard/firmes',
-  icon: 'building',
-  isActive: false,
-  shortcut: ['f', 'f'],
-  items: [
-    {
-      title: 'Toutes les firmes',
-      url: '/dashboard/firmes/',
-      isActive: false,
-      shortcut: ['c', 'c']
-    },
-    {
-      title: 'Créer une firme',
-      url: '/dashboard/firmes/nouveau',
-      isActive: false,
-      shortcut: ['c', 'c']
-    }
-  ]
+    title: 'Firmes',
+    url: `/${firmSlug}/dashboard/firmes`,
+    icon: 'building',
+    isActive: false,
+    shortcut: ['f', 'f'],
+    items: [
+      {
+        title: 'Toutes les firmes',
+        url: `/${firmSlug}/dashboard/firmes/`,
+        isActive: false,
+        shortcut: ['c', 'c']
+      },
+      {
+        title: 'Créer une firme',
+        url: `/${firmSlug}/dashboard/firmes/nouveau`,
+        isActive: false,
+        shortcut: ['c', 'c']
+      }
+    ]
   },
   {
     title: 'Utilisateurs',
-    url: '/dashboard/utilisateurs',
+    url: `/${firmSlug}/dashboard/utilisateurs`,
     icon: 'user2',
     isActive: false,
     shortcut: ['u', 'u'],
     items: [
       {
         title: 'Liste',
-        url: '/dashboard/utilisateurs/',
+        url: `/${firmSlug}/dashboard/utilisateurs/`,
         isActive: false,
         shortcut: ['c', 'c']
       },
       {
         title: 'Nouveau',
-        url: '/dashboard/utilisateurs/nouveau',
+        url: `/${firmSlug}/dashboard/utilisateurs/nouveau`,
         isActive: false,
         shortcut: ['c', 'c']
       }
@@ -67,13 +68,12 @@ export const navItemsAdmin: NavItem[] = [
   },
   {
     title: 'Modules',
-    url: '/dashboard/modules',
+    url: `/${firmSlug}/dashboard/modules`,
     icon: 'commandIcon',
     isActive: false,
     shortcut: ['m', 'm'],
     items: []
   }
-
 ];
 
 export interface SaleUser {

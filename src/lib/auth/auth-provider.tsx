@@ -320,7 +320,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           // Only redirect on explicit sign-in, not on token refresh
           if (!isNavigating.current && !pathname.startsWith('/dashboard')) {
             isNavigating.current = true;
-            router.push('/dashboard/overview');
+            router.push('/');
             setTimeout(() => {
               isNavigating.current = false;
             }, 1000);

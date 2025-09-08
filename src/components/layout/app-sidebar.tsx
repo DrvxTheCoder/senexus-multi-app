@@ -5,15 +5,6 @@ import {
   CollapsibleTrigger
 } from '@/components/ui/collapsible';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu';
-import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
@@ -28,17 +19,11 @@ import {
   SidebarMenuSubItem,
   SidebarRail
 } from '@/components/ui/sidebar';
-import { UserAvatarProfile } from '@/components/user-avatar-profile';
-import { navItems, navItemsAdmin } from '@/constants/data';
+import { getNavItems, getNavItemsAdmin } from '@/constants/data';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import {
-  IconBell,
   IconChevronRight,
-  IconChevronsDown,
-  IconCreditCard,
-  IconLogout,
-  IconPhotoUp,
-  IconUserCircle
+  IconLogout
 } from '@tabler/icons-react'
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -46,22 +31,13 @@ import * as React from 'react';
 import { Icons } from '../icons';
 import { OrgSwitcher } from '../org-switcher';
 import { Button } from '../ui/button';
-export const company = {
-  name: 'Acme Inc',
-  logo: IconPhotoUp,
-  plan: 'Enterprise'
-};
-
-const tenants = [
-  { id: '1', name: 'Acme Inc' },
-  { id: '2', name: 'Beta Corp' },
-  { id: '3', name: 'Gamma Ltd' }
-];
+import { useFirm } from '@/lib/contexts/firm-context'; // <-- Import the firm context
 
 export default function AppSidebar() {
   const pathname = usePathname();
   const { isOpen } = useMediaQuery();
   const router = useRouter();
+  const { firmSlug } = useFirm(); // <-- Get firmSlug from context
 
   React.useEffect(() => {
     // Side effects based on sidebar state changes
@@ -76,7 +52,7 @@ export default function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupLabel>Vue d&apos;ensemble</SidebarGroupLabel>
           <SidebarMenu>
-            {navItems.map((item) => {
+            {getNavItems(firmSlug).map((item) => {
               const Icon = item.icon ? Icons[item.icon] : Icons.logo;
               return item?.items && item?.items?.length > 0 ? (
                 <Collapsible
@@ -134,7 +110,7 @@ export default function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupLabel>Outils Société</SidebarGroupLabel>
           <SidebarMenu>
-            {navItemsAdmin.map((item) => {
+            {getNavItemsAdmin(firmSlug).map((item) => { // <-- Use firmSlug here too
               const Icon = item.icon ? Icons[item.icon] : Icons.logo;
               return item?.items && item?.items?.length > 0 ? (
                 <Collapsible

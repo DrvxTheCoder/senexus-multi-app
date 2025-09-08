@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import { useFirm } from './lib/contexts/firm-context';
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
@@ -30,6 +31,7 @@ export async function middleware(request: NextRequest) {
   await supabase.auth.getUser();
 
   const { data: { user } } = await supabase.auth.getUser();
+  const { firmSlug } = useFirm();
 
   // Redirect to login if accessing protected route without auth
   if (!user && request.nextUrl.pathname.startsWith('/dashboard')) {
@@ -38,7 +40,7 @@ export async function middleware(request: NextRequest) {
 
   // Redirect to dashboard if authenticated user accesses auth pages
   if (user && request.nextUrl.pathname.startsWith('/auth/')) {
-    return NextResponse.redirect(new URL('/dashboard/overview', request.url));
+    return NextResponse.redirect(new URL(`/${firmSlug}/dashboard/overview`, request.url));
   }
 
   return response;

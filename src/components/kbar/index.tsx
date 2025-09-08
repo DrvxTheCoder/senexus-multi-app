@@ -1,5 +1,5 @@
 'use client';
-import { navItems } from '@/constants/data';
+import { getNavItems } from '@/constants/data';
 import {
   KBarAnimator,
   KBarPortal,
@@ -11,9 +11,11 @@ import { useRouter } from 'next/navigation';
 import { useMemo } from 'react';
 import RenderResults from './render-result';
 import useThemeSwitching from './use-theme-switching';
+import { useFirm } from '@/lib/contexts/firm-context'; // <-- Import useFirm
 
 export default function KBar({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const { firmSlug } = useFirm(); // <-- Get firmSlug from context
 
   // These action are for the navigation
   const actions = useMemo(() => {
@@ -22,7 +24,7 @@ export default function KBar({ children }: { children: React.ReactNode }) {
       router.push(url);
     };
 
-    return navItems.flatMap((navItem) => {
+    return getNavItems(firmSlug).flatMap((navItem) => {
       // Only include base action if the navItem has a real URL and is not just a container
       const baseAction =
         navItem.url !== '#'
@@ -52,7 +54,7 @@ export default function KBar({ children }: { children: React.ReactNode }) {
       // Return only valid actions (ignoring null base actions for containers)
       return baseAction ? [baseAction, ...childActions] : childActions;
     });
-  }, [router]);
+  }, [router, firmSlug]); // <-- Add firmSlug to dependencies
 
   return (
     <KBarProvider actions={actions}>

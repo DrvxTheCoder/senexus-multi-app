@@ -89,11 +89,11 @@ export const useFirm = () => {
 // Hook to get firm-specific URLs
 export const useFirmUrls = () => {
   const { firmSlug } = useFirm();
-  
+
   return {
     dashboard: `/${firmSlug}/dashboard`,
     overview: `/${firmSlug}/dashboard/overview`,
-    users: `/${firmSlug}/dashboard/users`,
+    users: `/${firmSlug}/dashboard/utilisateurs`,
     settings: `/${firmSlug}/dashboard/settings`,
     hr: `/${firmSlug}/dashboard/hr`,
     finance: `/${firmSlug}/dashboard/finance`,
